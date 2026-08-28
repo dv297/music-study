@@ -13,8 +13,9 @@ one drills a different topic. The shape of an exercise is always the same:
 New work on this repo is usually either a new exercise or a deeper version of an
 existing one. Assume that unless told otherwise.
 
-The audience is one person practicing — no accounts, no backend, no persistence
-across reloads. Keep it a static site.
+The audience is one person practicing — no accounts, no backend. Keep it a
+static site; client-side persistence (localStorage) is fine, syncing across
+devices is not.
 
 ## Stack
 
@@ -43,7 +44,9 @@ pick it up automatically. An entry with no `component` renders as a "soon" stub 
 that's how the unbuilt exercises are listed.
 
 Exercise state (score, settings, current prompt) lives in the exercise component.
-There is no global store, and nothing is persisted.
+There is no global store. Settings persist to localStorage via
+`src/hooks/useStoredState.ts` (a drop-in `useState`) so they survive a reload;
+score and the current prompt don't.
 
 ## Music theory conventions
 
