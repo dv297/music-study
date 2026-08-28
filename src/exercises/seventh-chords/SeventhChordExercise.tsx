@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Piano, type KeyMark } from "../../components/Piano";
+import { useStoredState } from "../../hooks/useStoredState";
 import {
   CHORD_QUALITIES,
   chordAliasSymbols,
@@ -14,6 +15,7 @@ import { pitchClassOfMidi } from "../../lib/notes";
 const LOW_MIDI = 48; // C3
 const HIGH_MIDI = 72; // C5
 const DEFAULT_QUALITY_IDS = ["maj7", "dom7", "min7", "min7b5"];
+const SETTINGS_PREFIX = "music-study:seventh-chords:";
 
 interface Stats {
   attempted: number;
@@ -25,11 +27,11 @@ interface Stats {
 const EMPTY_STATS: Stats = { attempted: 0, correct: 0, streak: 0, bestStreak: 0 };
 
 export function SeventhChordExercise() {
-  const [qualityIds, setQualityIds] = useState<string[]>(DEFAULT_QUALITY_IDS);
-  const [requireRootInBass, setRequireRootInBass] = useState(false);
-  const [showNoteNames, setShowNoteNames] = useState(false);
+  const [qualityIds, setQualityIds] = useStoredState<string[]>(`${SETTINGS_PREFIX}qualityIds`, DEFAULT_QUALITY_IDS);
+  const [requireRootInBass, setRequireRootInBass] = useStoredState(`${SETTINGS_PREFIX}requireRootInBass`, false);
+  const [showNoteNames, setShowNoteNames] = useStoredState(`${SETTINGS_PREFIX}showNoteNames`, false);
 
-  const [chord, setChord] = useState<Chord>(() => randomChord(DEFAULT_QUALITY_IDS));
+  const [chord, setChord] = useState<Chord>(() => randomChord(qualityIds));
   const [selected, setSelected] = useState<ReadonlySet<number>>(() => new Set<number>());
   const [grade, setGrade] = useState<Grade | null>(null);
   const [stats, setStats] = useState<Stats>(EMPTY_STATS);
