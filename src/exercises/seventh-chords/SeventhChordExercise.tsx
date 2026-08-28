@@ -30,6 +30,7 @@ export function SeventhChordExercise() {
   const [qualityIds, setQualityIds] = useStoredState<string[]>(`${SETTINGS_PREFIX}qualityIds`, DEFAULT_QUALITY_IDS);
   const [requireRootInBass, setRequireRootInBass] = useStoredState(`${SETTINGS_PREFIX}requireRootInBass`, false);
   const [showNoteNames, setShowNoteNames] = useStoredState(`${SETTINGS_PREFIX}showNoteNames`, false);
+  const [autoSubmit, setAutoSubmit] = useStoredState(`${SETTINGS_PREFIX}autoSubmit`, false);
 
   const [chord, setChord] = useState<Chord>(() => randomChord(qualityIds));
   const [selected, setSelected] = useState<ReadonlySet<number>>(() => new Set<number>());
@@ -79,6 +80,11 @@ export function SeventhChordExercise() {
     if (grade) return;
     setSelected(new Set<number>());
   }, [grade]);
+
+  // Auto-submit once the selection has as many notes as the chord needs.
+  useEffect(() => {
+    if (autoSubmit && !grade && selected.size >= chord.pitchClasses.length) submit();
+  }, [autoSubmit, chord, grade, selected, submit]);
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
@@ -174,6 +180,8 @@ export function SeventhChordExercise() {
         onRequireRootInBassChange={setRequireRootInBass}
         showNoteNames={showNoteNames}
         onShowNoteNamesChange={setShowNoteNames}
+        autoSubmit={autoSubmit}
+        onAutoSubmitChange={setAutoSubmit}
         onReset={() => setStats(EMPTY_STATS)}
       />
     </div>
@@ -228,6 +236,8 @@ interface SettingsProps {
   onRequireRootInBassChange: (value: boolean) => void;
   showNoteNames: boolean;
   onShowNoteNamesChange: (value: boolean) => void;
+  autoSubmit: boolean;
+  onAutoSubmitChange: (value: boolean) => void;
   onReset: () => void;
 }
 
@@ -238,6 +248,8 @@ function Settings({
   onRequireRootInBassChange,
   showNoteNames,
   onShowNoteNamesChange,
+  autoSubmit,
+  onAutoSubmitChange,
   onReset,
 }: SettingsProps) {
   const toggleQuality = (id: string) => {
@@ -285,6 +297,14 @@ function Settings({
               onChange={(event) => onShowNoteNamesChange(event.target.checked)}
             />
             <span>Show note names on the keys</span>
+          </label>
+          <label className="checkbox">
+            <input
+              type="checkbox"
+              checked={autoSubmit}
+              onChange={(event) => onAutoSubmitChange(event.target.checked)}
+            />
+            <span>Check automatically once enough notes are selected</span>
           </label>
         </fieldset>
 
