@@ -1,0 +1,443 @@
+:root {
+  --bg: #0e1116;
+  --surface: #161b22;
+  --surface-raised: #1c232c;
+  --border: #2a323d;
+  --text: #e6edf3;
+  --text-muted: #90a0b0;
+  --accent: #6ea8ff;
+  --correct: #3fb950;
+  --incorrect: #f0616d;
+  --missing: #e3b341;
+  --radius: 10px;
+
+  color-scheme: dark;
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+}
+
+.app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-header {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.app-title {
+  color: var(--text);
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  text-decoration: none;
+}
+
+.app-breadcrumb {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.app-breadcrumb::before {
+  content: "/";
+  margin-right: 0.75rem;
+}
+
+.app-main {
+  flex: 1;
+  width: min(920px, 100%);
+  margin: 0 auto;
+  padding: 2rem 1.5rem 4rem;
+}
+
+/* --- Home --- */
+
+.home h1 {
+  margin: 0 0 0.25rem;
+  font-size: 1.6rem;
+  letter-spacing: -0.02em;
+}
+
+.home-lede {
+  margin: 0 0 2rem;
+  color: var(--text-muted);
+}
+
+.exercise-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+}
+
+.exercise-card {
+  display: block;
+  height: 100%;
+  padding: 1.1rem 1.2rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: inherit;
+  text-decoration: none;
+  transition: border-color 120ms ease, background 120ms ease;
+}
+
+a.exercise-card:hover {
+  border-color: var(--accent);
+  background: var(--surface-raised);
+}
+
+.exercise-card h2 {
+  margin: 0 0 0.35rem;
+  font-size: 1.05rem;
+}
+
+.exercise-card p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.exercise-card.is-disabled {
+  opacity: 0.5;
+}
+
+.badge {
+  margin-left: 0.4rem;
+  padding: 0.1rem 0.4rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  vertical-align: middle;
+}
+
+/* --- Exercise --- */
+
+.exercise {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.prompt {
+  text-align: center;
+}
+
+.prompt-instruction {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.chord-symbol {
+  margin: 0.35rem 0 0;
+  font-size: clamp(3rem, 12vw, 5rem);
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+}
+
+.chord-aliases {
+  margin: 0.35rem 0 0;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.verdict {
+  min-height: 3.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  text-align: center;
+  line-height: 1.5;
+}
+
+.verdict p {
+  margin: 0;
+}
+
+.verdict-pending {
+  color: var(--text-muted);
+}
+
+.verdict-correct {
+  border-color: color-mix(in srgb, var(--correct) 55%, var(--border));
+  background: color-mix(in srgb, var(--correct) 12%, var(--surface));
+}
+
+.verdict-incorrect {
+  border-color: color-mix(in srgb, var(--incorrect) 55%, var(--border));
+  background: color-mix(in srgb, var(--incorrect) 12%, var(--surface));
+}
+
+/* --- Piano --- */
+
+.piano {
+  padding: 0.75rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.piano-keys {
+  position: relative;
+  display: flex;
+  height: clamp(140px, 26vw, 210px);
+  user-select: none;
+}
+
+.key {
+  position: relative;
+  padding: 0;
+  border: 1px solid #0b0e13;
+  font: inherit;
+  cursor: pointer;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  transition: background 90ms ease;
+}
+
+.key:disabled {
+  cursor: default;
+}
+
+.key-white {
+  height: 100%;
+  background: #f2f4f7;
+  color: #4b5563;
+  border-radius: 0 0 5px 5px;
+}
+
+.key-white:not(:disabled):hover {
+  background: #dfe4ec;
+}
+
+.key-black {
+  position: absolute;
+  top: 0;
+  height: 62%;
+  background: #1b1f26;
+  color: #9aa6b4;
+  border-color: #000;
+  border-radius: 0 0 4px 4px;
+  z-index: 2;
+}
+
+.key-black:not(:disabled):hover {
+  background: #2b323c;
+}
+
+.key-label {
+  padding-bottom: 0.45rem;
+  font-size: 0.7rem;
+  pointer-events: none;
+}
+
+.key-white.is-selected {
+  background: var(--accent);
+  color: #08111f;
+}
+
+.key-black.is-selected {
+  background: color-mix(in srgb, var(--accent) 78%, #000);
+  color: #08111f;
+}
+
+.key.is-correct {
+  background: var(--correct);
+  color: #05230d;
+}
+
+.key.is-extra {
+  background: var(--incorrect);
+  color: #2b0407;
+}
+
+/* Only the image is set here so each key keeps its own white or black body. */
+.key.is-missing {
+  background-image: repeating-linear-gradient(
+    45deg,
+    color-mix(in srgb, var(--missing) 45%, transparent),
+    color-mix(in srgb, var(--missing) 45%, transparent) 5px,
+    transparent 5px,
+    transparent 10px
+  );
+  box-shadow: inset 0 0 0 2px var(--missing);
+}
+
+.key-white.is-missing {
+  color: #7a5a00;
+}
+
+.key-black.is-missing {
+  color: var(--missing);
+}
+
+/* --- Controls --- */
+
+.actions {
+  display: flex;
+  justify-content: center;
+  gap: 0.6rem;
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1.1rem;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font: inherit;
+  font-weight: 550;
+  cursor: pointer;
+}
+
+.button:not(:disabled):hover {
+  border-color: var(--accent);
+}
+
+.button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.button-primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #07152b;
+}
+
+.button-quiet {
+  padding: 0.4rem 0.8rem;
+  font-weight: 450;
+  font-size: 0.85rem;
+  align-self: flex-start;
+}
+
+kbd {
+  padding: 0.05rem 0.35rem;
+  border: 1px solid currentColor;
+  border-radius: 4px;
+  font-family: inherit;
+  font-size: 0.72rem;
+  opacity: 0.65;
+}
+
+.scoreboard {
+  display: flex;
+  justify-content: center;
+  gap: 2.5rem;
+  margin: 0;
+}
+
+.scoreboard div {
+  text-align: center;
+}
+
+.scoreboard dt {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.scoreboard dd {
+  margin: 0.2rem 0 0;
+  font-size: 1.25rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.scoreboard-sub {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+/* --- Settings --- */
+
+.settings {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.settings > summary {
+  padding: 0.7rem 1rem;
+  cursor: pointer;
+  font-weight: 550;
+  font-size: 0.9rem;
+}
+
+.settings-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  padding: 0 1rem 1rem;
+}
+
+.settings fieldset {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.settings legend {
+  padding: 0 0 0.5rem;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.quality-grid {
+  display: grid;
+  gap: 0.4rem;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+}
+
+.checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+  padding: 0.15rem 0;
+}
+
+.checkbox input {
+  accent-color: var(--accent);
+  width: 1rem;
+  height: 1rem;
+}
+
+.quality-suffix {
+  color: var(--text-muted);
+}
