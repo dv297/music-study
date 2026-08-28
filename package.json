@@ -7,7 +7,6 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
-    "lint": "tsc -b --noEmit false --emitDeclarationOnly false && echo ok",
     "typecheck": "tsc -b",
     "test": "vitest run"
   },
