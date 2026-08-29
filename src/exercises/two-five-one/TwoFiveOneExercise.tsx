@@ -36,18 +36,21 @@ export function TwoFiveOneExercise({ params }: ExerciseComponentProps) {
     return raw ? findRootByAscii(raw.trim()) : undefined;
   }, [params]);
 
+  // Computed once for the initial render and fed to useRef/useState's own
+  // initial-value slots, rather than mutating the ref from inside a
+  // useState initializer — reading or writing a ref during render (even in
+  // a lazy initializer) isn't safe. Empty deps are intentional: this is a
+  // mount-only pick, same intent as useState's lazy initializer.
+  const initialPick = useMemo(() => {
+    if (forcedKey) return { progression: buildTwoFiveOne(forcedKey), used: new Set([noteToAscii(forcedKey)]) };
+    return randomTwoFiveOne();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Tracks which keys this cycle has already drawn so nextProgression()
   // avoids repeating one until the rest of the pool has come up.
-  const usedKeysRef = useRef<Set<string>>(new Set());
-  const [progression, setProgression] = useState<TwoFiveOne>(() => {
-    if (forcedKey) {
-      usedKeysRef.current = new Set([noteToAscii(forcedKey)]);
-      return buildTwoFiveOne(forcedKey);
-    }
-    const picked = randomTwoFiveOne();
-    usedKeysRef.current = picked.used;
-    return picked.progression;
-  });
+  const usedKeysRef = useRef<Set<string>>(initialPick.used);
+  const [progression, setProgression] = useState<TwoFiveOne>(initialPick.progression);
   const [step, setStep] = useState(0);
   const [selected, setSelected] = useState<ReadonlySet<number>>(() => new Set<number>());
   const [grades, setGrades] = useState<StepGrades>(NO_GRADES);
@@ -111,7 +114,12 @@ export function TwoFiveOneExercise({ params }: ExerciseComponentProps) {
   }, [grade]);
 
   // Auto-submit once the selection has as many notes as the chord needs.
+  // Deliberately an effect rather than a call inside toggleKey: toggleKey is
+  // shared with Piano's computer-keyboard handler, and folding this grading
+  // logic in there would drop toggleKey's stable [] deps, churning Piano's
+  // keydown-listener effect on every keystroke.
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (autoSubmit && !grade && selected.size >= chord.pitchClasses.length) submit();
   }, [autoSubmit, chord, grade, selected, submit]);
 
@@ -155,7 +163,11 @@ export function TwoFiveOneExercise({ params }: ExerciseComponentProps) {
 
       <ol className="progression-steps">
         {DEGREES.map((label, index) => (
-          <li key={label} className={stepClassName(index, step, grades)} aria-current={index === step ? "step" : undefined}>
+          <li
+            key={label}
+            className={stepClassName(index, step, grades)}
+            aria-current={index === step ? "step" : undefined}
+          >
             {label}
           </li>
         ))}
@@ -232,7 +244,11 @@ export function TwoFiveOneExercise({ params }: ExerciseComponentProps) {
   );
 }
 
-function verdictState(grade: Grade | null, progressionDone: boolean, wholeCorrect: boolean): "pending" | "correct" | "incorrect" {
+function verdictState(
+  grade: Grade | null,
+  progressionDone: boolean,
+  wholeCorrect: boolean,
+): "pending" | "correct" | "incorrect" {
   if (!grade) return "pending";
   if (progressionDone) return wholeCorrect ? "correct" : "incorrect";
   return grade.correct ? "correct" : "incorrect";
@@ -260,7 +276,17 @@ function summarize(grades: StepGrades): string {
   return correctCount === DEGREES.length ? "Clean ii–V–I." : `${correctCount} of ${DEGREES.length} correct.`;
 }
 
-function Feedback({ degree, chord, grade, summary }: { degree: Degree; chord: Chord; grade: Grade; summary: string | null }) {
+function Feedback({
+  degree,
+  chord,
+  grade,
+  summary,
+}: {
+  degree: Degree;
+  chord: Chord;
+  grade: Grade;
+  summary: string | null;
+}) {
   const tones = chordToneNames(chord).join(" · ");
   const symbol = chordSymbol(chord);
 
@@ -280,7 +306,9 @@ function Feedback({ degree, chord, grade, summary }: { degree: Degree; chord: Ch
   } else {
     const problems: string[] = [];
     if (grade.missingPitchClasses.length > 0) {
-      problems.push(`missed ${grade.missingPitchClasses.length} ${grade.missingPitchClasses.length === 1 ? "note" : "notes"}`);
+      problems.push(
+        `missed ${grade.missingPitchClasses.length} ${grade.missingPitchClasses.length === 1 ? "note" : "notes"}`,
+      );
     }
     if (grade.extraMidi.length > 0) {
       const verb = grade.extraMidi.length === 1 ? "doesn't" : "don't";
