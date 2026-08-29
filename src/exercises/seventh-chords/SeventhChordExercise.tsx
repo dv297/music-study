@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Piano, type KeyMark } from "../../components/Piano";
 import { Tutorial } from "../../components/Tutorial";
+import { useReplaySound } from "../../hooks/usePianoSound";
 import { useStoredState } from "../../hooks/useStoredState";
 import {
   CHORD_QUALITIES,
@@ -14,6 +15,7 @@ import {
 } from "../../lib/chords";
 import { gradeAnswer, type Grade } from "../../lib/grade";
 import { pitchClassOfMidi } from "../../lib/notes";
+import { chordReplayGroups } from "../../lib/replay";
 import type { ExerciseComponentProps } from "../types";
 import { SeventhChordsTutorial } from "./Tutorial";
 
@@ -41,6 +43,8 @@ export function SeventhChordExercise({ params }: ExerciseComponentProps) {
     false,
   );
   const [playSound, setPlaySound] = useStoredState(`${SETTINGS_PREFIX}playSound`, true);
+  const [replayOnSuccess, setReplayOnSuccess] = useStoredState(`${SETTINGS_PREFIX}replayOnSuccess`, true);
+  const playReplay = useReplaySound(replayOnSuccess);
 
   // A ?chord=Bb:min7b5 param (see chordId()) pins the opening prompt instead
   // of drawing a random one, so a Playwright test can land on a known chord.
@@ -109,6 +113,7 @@ export function SeventhChordExercise({ params }: ExerciseComponentProps) {
     if (grade || selected.size === 0) return;
     const result = gradeAnswer(chord, [...selected], { requireRootInBass });
     setGrade(result);
+    if (result.correct) playReplay(chordReplayGroups(chord.tones, LOW_MIDI));
     setStats((previous) => {
       const streak = result.correct ? previous.streak + 1 : 0;
       return {
@@ -118,7 +123,7 @@ export function SeventhChordExercise({ params }: ExerciseComponentProps) {
         bestStreak: Math.max(previous.bestStreak, streak),
       };
     });
-  }, [chord, grade, requireRootInBass, selected]);
+  }, [chord, grade, playReplay, requireRootInBass, selected]);
 
   const clear = useCallback(() => {
     if (grade) return;
@@ -255,6 +260,8 @@ export function SeventhChordExercise({ params }: ExerciseComponentProps) {
         onShowAlternativeNotationChange={setShowAlternativeNotation}
         playSound={playSound}
         onPlaySoundChange={setPlaySound}
+        replayOnSuccess={replayOnSuccess}
+        onReplayOnSuccessChange={setReplayOnSuccess}
         onReset={() => setStats(EMPTY_STATS)}
       />
 
@@ -321,6 +328,8 @@ interface SettingsProps {
   onShowAlternativeNotationChange: (value: boolean) => void;
   playSound: boolean;
   onPlaySoundChange: (value: boolean) => void;
+  replayOnSuccess: boolean;
+  onReplayOnSuccessChange: (value: boolean) => void;
   onReset: () => void;
 }
 
@@ -337,6 +346,8 @@ function Settings({
   onShowAlternativeNotationChange,
   playSound,
   onPlaySoundChange,
+  replayOnSuccess,
+  onReplayOnSuccessChange,
   onReset,
 }: SettingsProps) {
   const toggleQuality = (id: string) => {
@@ -404,6 +415,14 @@ function Settings({
           <label className="checkbox">
             <input type="checkbox" checked={playSound} onChange={(event) => onPlaySoundChange(event.target.checked)} />
             <span>Play a sound when a note is pressed</span>
+          </label>
+          <label className="checkbox">
+            <input
+              type="checkbox"
+              checked={replayOnSuccess}
+              onChange={(event) => onReplayOnSuccessChange(event.target.checked)}
+            />
+            <span>Play the chord back, note by note then as a block, after a correct answer</span>
           </label>
         </fieldset>
 

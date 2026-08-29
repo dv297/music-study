@@ -26,6 +26,7 @@ import {
   randomModeQuality,
 } from "../modes";
 import { pickFromBag } from "../random";
+import { chordReplayGroups, scaleReplayGroups, tonesToAscendingMidi } from "../replay";
 import { buildScale, parseScaleId, randomScale, scaleId, scaleSymbol, SCALE_QUALITIES } from "../scales";
 import { findStandard, MISTY, standardSteps } from "../standards";
 
@@ -642,5 +643,54 @@ describe("pickFromBag", () => {
 
   it("throws with no candidates", () => {
     expect(() => pickFromBag([], (item: string) => item, new Set())).toThrow();
+  });
+});
+
+describe("tonesToAscendingMidi", () => {
+  it("places the root at its pitch class in the octave starting at lowMidi", () => {
+    const chord = buildChord(parseNote("C"), quality("maj7"));
+    expect(tonesToAscendingMidi(chord.tones, 48)).toEqual([48, 52, 55, 59]);
+  });
+
+  it("keeps the root at or above lowMidi even when its pitch class isn't 0", () => {
+    const chord = buildChord(parseNote("Bb"), quality("min7"));
+    expect(tonesToAscendingMidi(chord.tones, 48)).toEqual([58, 61, 65, 68]);
+  });
+
+  it("keeps every tone strictly ascending and within a major 7th of the root, for every chord", () => {
+    for (const root of ROOTS) {
+      for (const q of QUALITY_BY_ID.values()) {
+        const midi = tonesToAscendingMidi(buildChord(root, q).tones, 48);
+        expect(midi[0]).toBeGreaterThanOrEqual(48);
+        expect(midi[midi.length - 1] - midi[0]).toBeLessThanOrEqual(11);
+        for (let i = 1; i < midi.length; i++) expect(midi[i]).toBeGreaterThan(midi[i - 1]);
+      }
+    }
+  });
+
+  it("keeps every tone strictly ascending and within a major 7th of the root, for every scale", () => {
+    for (const root of ROOTS) {
+      for (const q of SCALE_QUALITIES) {
+        const midi = tonesToAscendingMidi(buildScale(root, q).tones, 48);
+        expect(midi[0]).toBeGreaterThanOrEqual(48);
+        expect(midi[midi.length - 1] - midi[0]).toBeLessThanOrEqual(11);
+        for (let i = 1; i < midi.length; i++) expect(midi[i]).toBeGreaterThan(midi[i - 1]);
+      }
+    }
+  });
+});
+
+describe("scaleReplayGroups", () => {
+  it("strikes each tone alone, in ascending order", () => {
+    const scaleQuality = SCALE_QUALITIES.find((q) => q.id === "wholeHalf")!;
+    const scale = buildScale(parseNote("C"), scaleQuality);
+    expect(scaleReplayGroups(scale.tones, 48)).toEqual([[48], [50], [51], [53], [54], [56], [57], [59]]);
+  });
+});
+
+describe("chordReplayGroups", () => {
+  it("strikes each tone alone, in ascending order, then every tone together as a block", () => {
+    const chord = buildChord(parseNote("C"), quality("maj7"));
+    expect(chordReplayGroups(chord.tones, 48)).toEqual([[48], [52], [55], [59], [48, 52, 55, 59]]);
   });
 });

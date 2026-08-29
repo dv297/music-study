@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Piano, type KeyMark } from "../../components/Piano";
 import { Tutorial } from "../../components/Tutorial";
+import { useReplaySound } from "../../hooks/usePianoSound";
 import { useStoredState } from "../../hooks/useStoredState";
 import { chordSymbol, chordToneNames, findRootByAscii, type Chord } from "../../lib/chords";
 import { gradeAnswer, type Grade } from "../../lib/grade";
 import { noteToAscii, pitchClassOfMidi } from "../../lib/notes";
 import { buildTwoFiveOne, DEGREES, randomTwoFiveOne, type Degree, type TwoFiveOne } from "../../lib/progressions";
+import { chordReplayGroups } from "../../lib/replay";
 import type { ExerciseComponentProps } from "../types";
 import { TwoFiveOneTutorial } from "./Tutorial";
 
@@ -31,6 +33,8 @@ export function TwoFiveOneExercise({ params }: ExerciseComponentProps) {
   const [showNoteNames, setShowNoteNames] = useStoredState(`${SETTINGS_PREFIX}showNoteNames`, false);
   const [autoSubmit, setAutoSubmit] = useStoredState(`${SETTINGS_PREFIX}autoSubmit`, false);
   const [playSound, setPlaySound] = useStoredState(`${SETTINGS_PREFIX}playSound`, true);
+  const [replayOnSuccess, setReplayOnSuccess] = useStoredState(`${SETTINGS_PREFIX}replayOnSuccess`, true);
+  const playReplay = useReplaySound(replayOnSuccess);
 
   // A ?key=Bb param pins the opening progression instead of drawing a
   // random one, so a Playwright test can land on a known ii–V–I.
@@ -97,6 +101,7 @@ export function TwoFiveOneExercise({ params }: ExerciseComponentProps) {
       next[step] = result;
       return next;
     });
+    if (result.correct) playReplay(chordReplayGroups(chord.tones, LOW_MIDI));
     if (onLastStep) {
       const allCorrect = Boolean(grades[0]?.correct) && Boolean(grades[1]?.correct) && result.correct;
       setStats((previous) => {
@@ -109,7 +114,7 @@ export function TwoFiveOneExercise({ params }: ExerciseComponentProps) {
         };
       });
     }
-  }, [chord, grade, grades, onLastStep, requireRootInBass, selected, step]);
+  }, [chord, grade, grades, onLastStep, playReplay, requireRootInBass, selected, step]);
 
   const clear = useCallback(() => {
     if (grade) return;
@@ -260,6 +265,8 @@ export function TwoFiveOneExercise({ params }: ExerciseComponentProps) {
         onAutoSubmitChange={setAutoSubmit}
         playSound={playSound}
         onPlaySoundChange={setPlaySound}
+        replayOnSuccess={replayOnSuccess}
+        onReplayOnSuccessChange={setReplayOnSuccess}
         onReset={() => setStats(EMPTY_STATS)}
       />
 
@@ -365,6 +372,8 @@ interface SettingsProps {
   onAutoSubmitChange: (value: boolean) => void;
   playSound: boolean;
   onPlaySoundChange: (value: boolean) => void;
+  replayOnSuccess: boolean;
+  onReplayOnSuccessChange: (value: boolean) => void;
   onReset: () => void;
 }
 
@@ -377,6 +386,8 @@ function Settings({
   onAutoSubmitChange,
   playSound,
   onPlaySoundChange,
+  replayOnSuccess,
+  onReplayOnSuccessChange,
   onReset,
 }: SettingsProps) {
   return (
@@ -412,6 +423,14 @@ function Settings({
           <label className="checkbox">
             <input type="checkbox" checked={playSound} onChange={(event) => onPlaySoundChange(event.target.checked)} />
             <span>Play a sound when a note is pressed</span>
+          </label>
+          <label className="checkbox">
+            <input
+              type="checkbox"
+              checked={replayOnSuccess}
+              onChange={(event) => onReplayOnSuccessChange(event.target.checked)}
+            />
+            <span>Play each chord back, note by note then as a block, after a correct answer</span>
           </label>
         </fieldset>
 

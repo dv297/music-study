@@ -99,3 +99,67 @@ test("the computer-keyboard shortcut also plays a tone", async ({ page }) => {
 
   expect(await oscillatorStarts(page)).toBe(1);
 });
+
+test("a correct chord answer replays it, note by note then as a block", async ({ page }) => {
+  await stubAudioContext(page);
+  await page.goto("/#/exercise/seventh-chords?chord=C:maj7");
+
+  for (const note of ["C4", "E4", "G4", "B4"]) {
+    await page.getByRole("button", { name: note, exact: true }).click();
+  }
+  expect(await oscillatorStarts(page)).toBe(4);
+
+  await page.getByRole("button", { name: "Check" }).click();
+
+  // The 4 key presses above, then the replay: the same 4 notes one at a
+  // time, then all 4 again together as a block chord — 8 more tones.
+  expect(await oscillatorStarts(page)).toBe(4 + 8);
+});
+
+test("an incorrect answer does not replay anything", async ({ page }) => {
+  await stubAudioContext(page);
+  await page.goto("/#/exercise/seventh-chords?chord=C:maj7");
+
+  for (const note of ["C4", "E4", "G4"]) {
+    await page.getByRole("button", { name: note, exact: true }).click();
+  }
+  expect(await oscillatorStarts(page)).toBe(3);
+
+  await page.getByRole("button", { name: "Check" }).click();
+  await expect(page.locator(".verdict")).toContainText("Not quite");
+
+  expect(await oscillatorStarts(page)).toBe(3);
+});
+
+test("unchecking the replay setting stops a correct answer from replaying", async ({ page }) => {
+  await stubAudioContext(page);
+  await page.goto("/#/exercise/seventh-chords?chord=C:maj7");
+
+  await page.click("summary");
+  await page.getByText("Play the chord back, note by note then as a block, after a correct answer").click();
+
+  for (const note of ["C4", "E4", "G4", "B4"]) {
+    await page.getByRole("button", { name: note, exact: true }).click();
+  }
+  expect(await oscillatorStarts(page)).toBe(4);
+
+  await page.getByRole("button", { name: "Check" }).click();
+  await expect(page.locator(".verdict")).toContainText("Correct.");
+
+  expect(await oscillatorStarts(page)).toBe(4);
+});
+
+test("a correct scale answer replays each note once, with no trailing block chord", async ({ page }) => {
+  await stubAudioContext(page);
+  await page.goto("/#/exercise/diminished-scale?scale=C:wholeHalf");
+
+  for (const note of ["C4", "D4", "D#4", "F4", "F#4", "G#4", "A4", "B4"]) {
+    await page.getByRole("button", { name: note, exact: true }).click();
+  }
+  expect(await oscillatorStarts(page)).toBe(8);
+
+  await page.getByRole("button", { name: "Check" }).click();
+
+  // The 8 key presses above, then the 8 scale notes replayed once each.
+  expect(await oscillatorStarts(page)).toBe(8 + 8);
+});
