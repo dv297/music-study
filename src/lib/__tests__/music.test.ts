@@ -14,6 +14,7 @@ import { gradeAnswer } from "../grade";
 import { midiToFrequency, noteToAscii, parseNote, pitchClassOf, spellAbove } from "../notes";
 import { buildTwoFiveOne, randomTwoFiveOne } from "../progressions";
 import { pickFromBag } from "../random";
+import { buildScale, parseScaleId, randomScale, scaleId, scaleSymbol, SCALE_QUALITIES } from "../scales";
 import { findStandard, MISTY, standardSteps } from "../standards";
 
 const quality = (id: string) => {
@@ -290,6 +291,78 @@ describe("findStandard", () => {
   it("returns undefined for an unknown or null id", () => {
     expect(findStandard("not-a-standard")).toBeUndefined();
     expect(findStandard(null)).toBeUndefined();
+  });
+});
+
+describe("diminished scales", () => {
+  const scaleQuality = (id: string) => {
+    const q = SCALE_QUALITIES.find((quality) => quality.id === id);
+    if (!q) throw new Error(`missing scale quality ${id}`);
+    return q;
+  };
+
+  it("spells the whole-half scale with the widely taught letters", () => {
+    const scale = buildScale(parseNote("C"), scaleQuality("wholeHalf"));
+    expect(scale.tones.map(noteToAscii)).toEqual(["C", "D", "Eb", "F", "Gb", "Ab", "A", "B"]);
+    expect(scale.pitchClasses).toEqual([0, 2, 3, 5, 6, 8, 9, 11]);
+  });
+
+  it("spells the half-whole scale with the widely taught letters", () => {
+    const scale = buildScale(parseNote("C"), scaleQuality("halfWhole"));
+    expect(scale.tones.map(noteToAscii)).toEqual(["C", "Db", "D#", "E", "F#", "G", "A", "Bb"]);
+    expect(scale.pitchClasses).toEqual([0, 1, 3, 4, 6, 7, 9, 10]);
+  });
+
+  it("renders the root with a display accidental", () => {
+    expect(scaleSymbol(buildScale(parseNote("F#"), scaleQuality("halfWhole")))).toBe("F♯ dim (H–W)");
+  });
+
+  it("round-trips every root and quality through scaleId()", () => {
+    for (const root of ROOTS) {
+      for (const q of SCALE_QUALITIES) {
+        const scale = buildScale(root, q);
+        expect(parseScaleId(scaleId(scale))).toEqual(scale);
+      }
+    }
+  });
+
+  it("returns undefined for an unrecognized root, quality, or malformed id", () => {
+    expect(parseScaleId("H:wholeHalf")).toBeUndefined();
+    expect(parseScaleId("C:not-a-quality")).toBeUndefined();
+    expect(parseScaleId("CwholeHalf")).toBeUndefined();
+    expect(parseScaleId("")).toBeUndefined();
+  });
+
+  it("draws every scale in the pool once before any repeat, starting fresh", () => {
+    let used = new Set<string>();
+    const ids = new Set<string>();
+    const poolSize = ROOTS.length * SCALE_QUALITIES.length;
+    for (let i = 0; i < poolSize; i++) {
+      const { scale, used: nextUsed } = randomScale(["wholeHalf", "halfWhole"], used);
+      ids.add(scaleId(scale));
+      used = nextUsed;
+    }
+    expect(ids.size).toBe(poolSize);
+  });
+
+  it("never repeats the immediately previous scale, even across a cycle boundary", () => {
+    let used = new Set<string>();
+    const ids: string[] = [];
+    for (let i = 0; i < ROOTS.length * 5; i++) {
+      const { scale, used: nextUsed } = randomScale(["wholeHalf"], used);
+      ids.push(scaleId(scale));
+      used = nextUsed;
+    }
+    expectNoImmediateRepeats(ids);
+  });
+
+  it("only draws from the enabled qualities", () => {
+    let used = new Set<string>();
+    for (let i = 0; i < 50; i++) {
+      const picked = randomScale(["halfWhole"], used);
+      expect(picked.scale.quality.id).toBe("halfWhole");
+      used = picked.used;
+    }
   });
 });
 

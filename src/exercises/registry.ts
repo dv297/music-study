@@ -1,4 +1,5 @@
 import type { ComponentType } from "react";
+import { DiminishedScaleExercise } from "./diminished-scale/DiminishedScaleExercise";
 import { JazzStandardExercise } from "./jazz-standards/JazzStandardExercise";
 import { SeventhChordExercise } from "./seventh-chords/SeventhChordExercise";
 import { TwoFiveOneExercise } from "./two-five-one/TwoFiveOneExercise";
@@ -31,6 +32,12 @@ export const EXERCISES: ExerciseDefinition[] = [
     title: "ii–V–I",
     summary: "See the key, then play the ii, V, and I chords in order.",
     component: TwoFiveOneExercise,
+  },
+  {
+    id: "diminished-scale",
+    title: "Diminished Scales",
+    summary: "Play the whole-half or half-whole diminished scale from any root.",
+    component: DiminishedScaleExercise,
   },
   {
     id: "intervals",
