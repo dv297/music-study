@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Piano, type KeyMark } from "../../components/Piano";
+import { Tutorial } from "../../components/Tutorial";
 import { useStoredState } from "../../hooks/useStoredState";
 import {
   CHORD_QUALITIES,
@@ -14,6 +15,7 @@ import {
 import { gradeAnswer, type Grade } from "../../lib/grade";
 import { pitchClassOfMidi } from "../../lib/notes";
 import type { ExerciseComponentProps } from "../types";
+import { SeventhChordsTutorial } from "./Tutorial";
 
 const LOW_MIDI = 48; // C3
 const HIGH_MIDI = 72; // C5
@@ -255,6 +257,10 @@ export function SeventhChordExercise({ params }: ExerciseComponentProps) {
         onPlaySoundChange={setPlaySound}
         onReset={() => setStats(EMPTY_STATS)}
       />
+
+      <Tutorial>
+        <SeventhChordsTutorial />
+      </Tutorial>
     </div>
   );
 }

@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Piano, type KeyMark } from "../../components/Piano";
+import { Tutorial } from "../../components/Tutorial";
 import { useStoredState } from "../../hooks/useStoredState";
 import { chordSymbol, chordToneNames, findRootByAscii, type Chord } from "../../lib/chords";
 import { gradeAnswer, type Grade } from "../../lib/grade";
 import { noteToAscii, pitchClassOfMidi } from "../../lib/notes";
 import { buildTwoFiveOne, DEGREES, randomTwoFiveOne, type Degree, type TwoFiveOne } from "../../lib/progressions";
 import type { ExerciseComponentProps } from "../types";
+import { TwoFiveOneTutorial } from "./Tutorial";
 
 const LOW_MIDI = 48; // C3
 const HIGH_MIDI = 72; // C5
@@ -260,6 +262,10 @@ export function TwoFiveOneExercise({ params }: ExerciseComponentProps) {
         onPlaySoundChange={setPlaySound}
         onReset={() => setStats(EMPTY_STATS)}
       />
+
+      <Tutorial>
+        <TwoFiveOneTutorial />
+      </Tutorial>
     </div>
   );
 }

@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Piano, type KeyMark } from "../../components/Piano";
+import { Tutorial } from "../../components/Tutorial";
 import { useStoredState } from "../../hooks/useStoredState";
 import { chordSymbol, chordToneNames, type Chord } from "../../lib/chords";
 import { gradeAnswer, type Grade } from "../../lib/grade";
 import { pitchClassOfMidi } from "../../lib/notes";
 import { JAZZ_STANDARDS, findStandard, standardSteps, type JazzStandard, type StandardStep } from "../../lib/standards";
 import type { ExerciseComponentProps } from "../types";
+import { JazzStandardsTutorial } from "./Tutorial";
 
 const LOW_MIDI = 48; // C3
 const HIGH_MIDI = 72; // C5
@@ -234,6 +236,10 @@ function StandardPractice({ standard, params }: { standard: JazzStandard; params
         onPlaySoundChange={setPlaySound}
         onRestart={restart}
       />
+
+      <Tutorial>
+        <JazzStandardsTutorial />
+      </Tutorial>
     </div>
   );
 }
