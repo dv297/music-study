@@ -554,3 +554,59 @@ kbd {
 .quality-suffix {
   color: var(--text-muted);
 }
+
+/* --- Tutorial --- */
+
+.tutorial-section h3 {
+  margin: 0 0 0.5rem;
+  font-size: 0.95rem;
+  color: var(--text);
+}
+
+.tutorial-section p {
+  margin: 0 0 0.6rem;
+  color: var(--text);
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.tutorial-section p:last-child {
+  margin-bottom: 0;
+}
+
+.tutorial-section ul,
+.tutorial-section ol {
+  margin: 0 0 0.6rem;
+  padding-left: 1.2rem;
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.tutorial-section ul:last-child,
+.tutorial-section ol:last-child {
+  margin-bottom: 0;
+}
+
+.tutorial-section li {
+  margin-bottom: 0.45rem;
+}
+
+.tutorial-section li:last-child {
+  margin-bottom: 0;
+}
+
+.tutorial-section li > ul,
+.tutorial-section li > ol {
+  margin-top: 0.35rem;
+}
+
+.tutorial-formula {
+  display: inline-block;
+  padding: 0.05rem 0.45rem;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
