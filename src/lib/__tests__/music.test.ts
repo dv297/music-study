@@ -20,8 +20,7 @@ const quality = (id: string) => {
   return q;
 };
 
-const spelling = (root: string, id: string) =>
-  buildChord(parseNote(root), quality(id)).tones.map(noteToAscii);
+const spelling = (root: string, id: string) => buildChord(parseNote(root), quality(id)).tones.map(noteToAscii);
 
 /** Fails if any two consecutive entries in `sequence` are equal. */
 function expectNoImmediateRepeats(sequence: readonly string[]): void {

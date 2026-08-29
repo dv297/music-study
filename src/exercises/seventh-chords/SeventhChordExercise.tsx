@@ -42,25 +42,31 @@ export function SeventhChordExercise({ params }: ExerciseComponentProps) {
     return raw ? parseChordId(raw.trim()) : undefined;
   }, [params]);
 
+  // Computed once for the initial render and fed to useRef/useState's own
+  // initial-value slots, rather than mutating the ref from inside a
+  // useState initializer — reading or writing a ref during render (even in
+  // a lazy initializer) isn't safe. Empty deps are intentional: this is a
+  // mount-only pick, same intent as useState's lazy initializer.
+  const initialPick = useMemo(() => {
+    if (forcedChord) return { chord: forcedChord, used: new Set([chordId(forcedChord)]) };
+    return randomChord(qualityIds);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Tracks which chords this cycle has already drawn so nextChord() avoids
   // repeating one until the rest of the pool has come up.
-  const usedChordsRef = useRef<Set<string>>(new Set());
-  const [chord, setChord] = useState<Chord>(() => {
-    if (forcedChord) {
-      usedChordsRef.current = new Set([chordId(forcedChord)]);
-      return forcedChord;
-    }
-    const picked = randomChord(qualityIds);
-    usedChordsRef.current = picked.used;
-    return picked.chord;
-  });
+  const usedChordsRef = useRef<Set<string>>(initialPick.used);
+  const [chord, setChord] = useState<Chord>(initialPick.chord);
   const [selected, setSelected] = useState<ReadonlySet<number>>(() => new Set<number>());
   const [grade, setGrade] = useState<Grade | null>(null);
   const [stats, setStats] = useState<Stats>(EMPTY_STATS);
 
-  // Kept in a ref so the keyboard handler never closes over a stale chord.
+  // Kept in sync via effect (rather than written during render) so the
+  // keyboard handler never closes over a stale chord.
   const chordRef = useRef(chord);
-  chordRef.current = chord;
+  useEffect(() => {
+    chordRef.current = chord;
+  });
 
   const nextChord = useCallback(() => {
     const picked = randomChord(qualityIds, usedChordsRef.current);
@@ -113,7 +119,13 @@ export function SeventhChordExercise({ params }: ExerciseComponentProps) {
   }, [grade]);
 
   // Auto-submit once the selection has as many notes as the chord needs.
+  // Deliberately an effect rather than a call inside toggleKey: toggleKey is
+  // shared with Piano's computer-keyboard handler, and folding the grading
+  // logic in there would mean duplicating it (two-five-one has its own,
+  // longer version) and would drop toggleKey's stable [] deps, churning
+  // Piano's keydown-listener effect on every keystroke.
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (autoSubmit && !grade && selected.size >= chord.pitchClasses.length) submit();
   }, [autoSubmit, chord, grade, selected, submit]);
 
@@ -156,7 +168,11 @@ export function SeventhChordExercise({ params }: ExerciseComponentProps) {
       </header>
 
       <div className={`verdict verdict-${grade ? (grade.correct ? "correct" : "incorrect") : "pending"}`}>
-        {grade ? <Feedback chord={chord} grade={grade} /> : <p>{describeSelection(selected.size, requireRootInBass)}</p>}
+        {grade ? (
+          <Feedback chord={chord} grade={grade} />
+        ) : (
+          <p>{describeSelection(selected.size, requireRootInBass)}</p>
+        )}
       </div>
 
       <Piano
@@ -246,7 +262,9 @@ function Feedback({ chord, grade }: { chord: Chord; grade: Grade }) {
   }
   const problems: string[] = [];
   if (grade.missingPitchClasses.length > 0) {
-    problems.push(`missed ${grade.missingPitchClasses.length} ${grade.missingPitchClasses.length === 1 ? "note" : "notes"}`);
+    problems.push(
+      `missed ${grade.missingPitchClasses.length} ${grade.missingPitchClasses.length === 1 ? "note" : "notes"}`,
+    );
   }
   if (grade.extraMidi.length > 0) {
     const verb = grade.extraMidi.length === 1 ? "doesn't" : "don't";

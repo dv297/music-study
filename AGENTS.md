@@ -24,10 +24,13 @@ in `src/styles.css` with custom properties for the palette. Prefer keeping it
 that way; reach for a dependency only when hand-rolling would be genuinely worse.
 
 ```bash
-npm run dev        # http://localhost:5173
-npm test           # vitest
-npm run test:e2e   # playwright, against a dev server it starts itself
-npm run typecheck  # tsc -b
+npm run dev           # http://localhost:5173
+npm test              # vitest
+npm run test:e2e      # playwright, against a dev server it starts itself
+npm run typecheck     # tsc -b
+npm run lint          # eslint . — also runs Prettier, as the prettier/prettier rule
+npm run format        # prettier --write .
+npm run format:check  # prettier --check .
 npm run build
 ```
 
@@ -85,7 +88,7 @@ scoped to one navigation instead of sticking around after an in-app link click):
 #/exercise/two-five-one?key=F#              (root ascii — see findRootByAscii() in src/lib/chords.ts)
 ```
 
-This only pins the *first* prompt the exercise shows — "Next chord" and its
+This only pins the _first_ prompt the exercise shows — "Next chord" and its
 equivalents go back to drawing randomly, same as ever. An unrecognized root or
 quality is ignored rather than erroring, and the exercise falls back to a
 random draw as if no param had been given. The point is a deterministic
@@ -121,6 +124,30 @@ container built from the root `Dockerfile` (`mcr.microsoft.com/playwright`,
 tagged to the same `@playwright/test` version as above — that image ships the
 matching browser build already installed, so CI doesn't download one). Bump
 both pins together if you bump `@playwright/test`.
+
+## Linting and formatting
+
+Prettier owns formatting; ESLint (`eslint.config.js`) owns everything else, and
+runs Prettier as one of its own rules (`eslint-plugin-prettier`) so `npm run
+lint` alone catches both — a formatting diff fails lint the same as a real rule
+violation. Never hand-fix a `prettier/prettier` finding; run `npm run format`
+(or `lint:fix`) and let it rewrite the line. `.prettierrc.json` overrides only
+`printWidth` (120, to match this codebase's existing line length — the default
+80 would rewrap most of it for no reason); everything else is Prettier's
+default.
+
+`eslint-plugin-react-hooks`'s `recommended` config is the full "Rules of
+React" set (purity, effect/ref discipline, etc.), not just the classic two
+hooks rules — expect it to catch real bugs, not just style. Prefer fixing a
+finding over suppressing it; the two exceptions currently in the exercises
+(`react-hooks/set-state-in-effect` on the auto-submit effects) have a comment
+explaining why the effect is the right tool there. A disable comment must sit
+on the exact line ESLint blames, which for `exhaustive-deps` is the
+dependency array, not the `useEffect(`/`useMemo(` line — check the reported
+line/column before assuming a comment took effect.
+
+`.github/workflows/lint.yml` runs `npm run lint` and `npm run format:check` on
+every pull request.
 
 ## Deploying
 
