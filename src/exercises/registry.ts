@@ -1,13 +1,14 @@
 import type { ComponentType } from "react";
 import { SeventhChordExercise } from "./seventh-chords/SeventhChordExercise";
 import { TwoFiveOneExercise } from "./two-five-one/TwoFiveOneExercise";
+import type { ExerciseComponentProps } from "./types";
 
 export interface ExerciseDefinition {
   id: string;
   title: string;
   summary: string;
   /** Exercises without a component are stubs listed on the home screen. */
-  component?: ComponentType;
+  component?: ComponentType<ExerciseComponentProps>;
 }
 
 export const EXERCISES: ExerciseDefinition[] = [

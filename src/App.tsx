@@ -1,25 +1,9 @@
-import { useEffect, useState } from "react";
 import { EXERCISES, findExercise } from "./exercises/registry";
-
-/** Hash routing keeps a reload on an exercise working without a router dependency. */
-function useHashRoute(): string | null {
-  const [route, setRoute] = useState(() => parseHash(window.location.hash));
-  useEffect(() => {
-    const onHashChange = () => setRoute(parseHash(window.location.hash));
-    window.addEventListener("hashchange", onHashChange);
-    return () => window.removeEventListener("hashchange", onHashChange);
-  }, []);
-  return route;
-}
-
-function parseHash(hash: string): string | null {
-  const match = /^#\/exercise\/([\w-]+)$/.exec(hash);
-  return match ? match[1] : null;
-}
+import { useHashRoute } from "./hooks/useHashRoute";
 
 export function App() {
-  const route = useHashRoute();
-  const exercise = findExercise(route);
+  const { exerciseId, params } = useHashRoute();
+  const exercise = findExercise(exerciseId);
 
   return (
     <div className="app">
@@ -31,7 +15,7 @@ export function App() {
       </header>
 
       <main className="app-main">
-        {exercise?.component ? <exercise.component /> : <Home />}
+        {exercise?.component ? <exercise.component params={params} /> : <Home />}
       </main>
     </div>
   );

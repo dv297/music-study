@@ -1,5 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { buildChord, chordSymbol, QUALITY_BY_ID, randomChord, chordId, ROOTS } from "../chords";
+import {
+  buildChord,
+  chordSymbol,
+  QUALITY_BY_ID,
+  randomChord,
+  chordId,
+  findRootByAscii,
+  parseChordId,
+  ROOTS,
+} from "../chords";
 import { gradeAnswer } from "../grade";
 import { noteToAscii, parseNote, pitchClassOf, spellAbove } from "../notes";
 import { buildTwoFiveOne, randomTwoFiveOne } from "../progressions";
@@ -156,6 +165,43 @@ describe("buildTwoFiveOne", () => {
       const { chords } = buildTwoFiveOne(root);
       expect(chords.map((chord) => chord.quality.id)).toEqual(["min7", "dom7", "maj7"]);
     }
+  });
+});
+
+describe("findRootByAscii", () => {
+  it("finds every one of the fourteen practical roots by its ASCII spelling", () => {
+    for (const root of ROOTS) {
+      expect(findRootByAscii(noteToAscii(root))).toEqual(root);
+    }
+  });
+
+  it("returns undefined for a spelling outside the practical set", () => {
+    expect(findRootByAscii("B#")).toBeUndefined();
+    expect(findRootByAscii("Fb")).toBeUndefined();
+    expect(findRootByAscii("nonsense")).toBeUndefined();
+  });
+});
+
+describe("parseChordId", () => {
+  it("round-trips every root and quality through chordId()", () => {
+    for (const root of ROOTS) {
+      for (const q of QUALITY_BY_ID.values()) {
+        const chord = buildChord(root, q);
+        expect(parseChordId(chordId(chord))).toEqual(chord);
+      }
+    }
+  });
+
+  it("returns undefined for an unrecognized root or quality", () => {
+    expect(parseChordId("H:maj7")).toBeUndefined();
+    expect(parseChordId("C:not-a-quality")).toBeUndefined();
+  });
+
+  it("returns undefined for a malformed id", () => {
+    expect(parseChordId("Cmaj7")).toBeUndefined();
+    expect(parseChordId("")).toBeUndefined();
+    expect(parseChordId(":maj7")).toBeUndefined();
+    expect(parseChordId("C:")).toBeUndefined();
   });
 });
 

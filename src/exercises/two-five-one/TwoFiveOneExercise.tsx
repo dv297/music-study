@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Piano, type KeyMark } from "../../components/Piano";
 import { useStoredState } from "../../hooks/useStoredState";
-import { chordSymbol, chordToneNames, type Chord } from "../../lib/chords";
+import { chordSymbol, chordToneNames, findRootByAscii, type Chord } from "../../lib/chords";
 import { gradeAnswer, type Grade } from "../../lib/grade";
-import { pitchClassOfMidi } from "../../lib/notes";
-import { DEGREES, randomTwoFiveOne, type Degree, type TwoFiveOne } from "../../lib/progressions";
+import { noteToAscii, pitchClassOfMidi } from "../../lib/notes";
+import { buildTwoFiveOne, DEGREES, randomTwoFiveOne, type Degree, type TwoFiveOne } from "../../lib/progressions";
+import type { ExerciseComponentProps } from "../types";
 
 const LOW_MIDI = 48; // C3
 const HIGH_MIDI = 72; // C5
@@ -23,15 +24,26 @@ interface Stats {
 
 const EMPTY_STATS: Stats = { attempted: 0, correct: 0, streak: 0, bestStreak: 0 };
 
-export function TwoFiveOneExercise() {
+export function TwoFiveOneExercise({ params }: ExerciseComponentProps) {
   const [requireRootInBass, setRequireRootInBass] = useStoredState(`${SETTINGS_PREFIX}requireRootInBass`, false);
   const [showNoteNames, setShowNoteNames] = useStoredState(`${SETTINGS_PREFIX}showNoteNames`, false);
   const [autoSubmit, setAutoSubmit] = useStoredState(`${SETTINGS_PREFIX}autoSubmit`, false);
+
+  // A ?key=Bb param pins the opening progression instead of drawing a
+  // random one, so a Playwright test can land on a known ii–V–I.
+  const forcedKey = useMemo(() => {
+    const raw = params.get("key");
+    return raw ? findRootByAscii(raw.trim()) : undefined;
+  }, [params]);
 
   // Tracks which keys this cycle has already drawn so nextProgression()
   // avoids repeating one until the rest of the pool has come up.
   const usedKeysRef = useRef<Set<string>>(new Set());
   const [progression, setProgression] = useState<TwoFiveOne>(() => {
+    if (forcedKey) {
+      usedKeysRef.current = new Set([noteToAscii(forcedKey)]);
+      return buildTwoFiveOne(forcedKey);
+    }
     const picked = randomTwoFiveOne();
     usedKeysRef.current = picked.used;
     return picked.progression;

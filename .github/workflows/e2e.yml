@@ -1,0 +1,22 @@
+name: E2E Tests
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build test image
+        run: docker build -t music-study-e2e .
+
+      - name: Run Playwright tests
+        run: docker run --rm -e CI=true music-study-e2e

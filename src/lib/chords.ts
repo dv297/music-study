@@ -127,6 +127,21 @@ export function chordId(chord: Chord): string {
   return `${noteToAscii(chord.root)}:${chord.quality.id}`;
 }
 
+/** Looks up one of the fourteen practical roots by its ASCII spelling, e.g. "F#" or "Bb". */
+export function findRootByAscii(ascii: string): SpelledNote | undefined {
+  return ROOTS.find((root) => noteToAscii(root) === ascii);
+}
+
+/** Parses the format chordId() produces, e.g. "F#:maj7". Undefined if the root or quality isn't recognized. */
+export function parseChordId(id: string): Chord | undefined {
+  const [rootAscii, qualityId] = id.split(":");
+  if (!rootAscii || !qualityId) return undefined;
+  const root = findRootByAscii(rootAscii);
+  const quality = QUALITY_BY_ID.get(qualityId);
+  if (!root || !quality) return undefined;
+  return buildChord(root, quality);
+}
+
 /**
  * Pick a random chord from the enabled qualities. Avoids repeating any
  * chord already used this cycle — see `pickFromBag` — so the same symbol
