@@ -113,6 +113,15 @@ export function TwoFiveOneExercise({ params }: ExerciseComponentProps) {
     setSelected(new Set<number>());
   }, [grade]);
 
+  const retry = useCallback(() => {
+    setSelected(new Set<number>());
+    setGrades((previous) => {
+      const next: [Grade | null, Grade | null, Grade | null] = [previous[0], previous[1], previous[2]];
+      next[step] = null;
+      return next;
+    });
+  }, [step]);
+
   // Auto-submit once the selection has as many notes as the chord needs.
   // Deliberately an effect rather than a call inside toggleKey: toggleKey is
   // shared with Piano's computer-keyboard handler, and folding this grading
@@ -193,14 +202,21 @@ export function TwoFiveOneExercise({ params }: ExerciseComponentProps) {
 
       <div className="actions">
         {grade ? (
-          <button
-            type="button"
-            className="button button-primary"
-            onClick={progressionDone ? nextProgression : advance}
-            autoFocus
-          >
-            {progressionDone ? "New ii–V–I" : `Next: ${DEGREES[step + 1]}`} <kbd>↵</kbd>
-          </button>
+          <>
+            {!grade.correct && (
+              <button type="button" className="button" onClick={retry}>
+                Retry
+              </button>
+            )}
+            <button
+              type="button"
+              className="button button-primary"
+              onClick={progressionDone ? nextProgression : advance}
+              autoFocus
+            >
+              {progressionDone ? "New ii–V–I" : `Next: ${DEGREES[step + 1]}`} <kbd>↵</kbd>
+            </button>
+          </>
         ) : (
           <>
             <button type="button" className="button button-primary" onClick={submit} disabled={selected.size === 0}>

@@ -34,6 +34,28 @@ test("answering every note correctly advances to the next chord", async ({ page 
   await expect(page.locator(".standard-progress-label")).toContainText("Chord 2 of");
 });
 
+test("a wrong chord offers a retry that keeps the same position in the tune", async ({ page }) => {
+  await page.goto("/#/exercise/jazz-standards?standard=misty");
+
+  // Missing notes for E♭△7 (the first chord).
+  for (const note of ["D#3", "G3", "A#3"]) {
+    await page.getByRole("button", { name: note, exact: true }).click();
+  }
+  await page.getByRole("button", { name: "Check" }).click();
+  await expect(page.locator(".verdict")).toContainText("Not quite");
+
+  await page.getByRole("button", { name: "Retry" }).click();
+  await expect(page.locator(".verdict")).not.toContainText("Not quite");
+  await expect(page.locator(".standard-progress-label")).toContainText("Chord 1 of");
+
+  for (const note of ["D#3", "G3", "A#3", "D4"]) {
+    await page.getByRole("button", { name: note, exact: true }).click();
+  }
+  await page.getByRole("button", { name: "Check" }).click();
+
+  await expect(page.locator(".verdict")).toContainText("Correct.");
+});
+
 test("finishing the last chord shows a tune-complete summary", async ({ page }) => {
   await page.goto("/#/exercise/jazz-standards?standard=misty&step=49");
 

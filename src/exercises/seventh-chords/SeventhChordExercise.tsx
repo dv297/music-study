@@ -122,6 +122,11 @@ export function SeventhChordExercise({ params }: ExerciseComponentProps) {
     setSelected(new Set<number>());
   }, [grade]);
 
+  const retry = useCallback(() => {
+    setSelected(new Set<number>());
+    setGrade(null);
+  }, []);
+
   // Auto-submit once the selection has as many notes as the chord needs.
   // Deliberately an effect rather than a call inside toggleKey: toggleKey is
   // shared with Piano's computer-keyboard handler, and folding the grading
@@ -193,9 +198,16 @@ export function SeventhChordExercise({ params }: ExerciseComponentProps) {
 
       <div className="actions">
         {grade ? (
-          <button type="button" className="button button-primary" onClick={nextChord} autoFocus>
-            Next chord <kbd>↵</kbd>
-          </button>
+          <>
+            {!grade.correct && (
+              <button type="button" className="button" onClick={retry}>
+                Retry
+              </button>
+            )}
+            <button type="button" className="button button-primary" onClick={nextChord} autoFocus>
+              Next chord <kbd>↵</kbd>
+            </button>
+          </>
         ) : (
           <>
             <button type="button" className="button button-primary" onClick={submit} disabled={selected.size === 0}>

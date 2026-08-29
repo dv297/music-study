@@ -106,6 +106,11 @@ function StandardPractice({ standard, params }: { standard: JazzStandard; params
     setSelected(new Set<number>());
   }, [grade]);
 
+  const retry = useCallback(() => {
+    setSelected(new Set<number>());
+    setGrade(null);
+  }, []);
+
   // Auto-submit once the selection has as many notes as the chord needs.
   // Deliberately an effect rather than a call inside toggleKey — see the
   // same pattern in SeventhChordExercise.tsx.
@@ -184,9 +189,16 @@ function StandardPractice({ standard, params }: { standard: JazzStandard; params
 
       <div className="actions">
         {grade ? (
-          <button type="button" className="button button-primary" onClick={tuneDone ? restart : advance} autoFocus>
-            {tuneDone ? "Start over" : "Next chord"} <kbd>↵</kbd>
-          </button>
+          <>
+            {!grade.correct && (
+              <button type="button" className="button" onClick={retry}>
+                Retry
+              </button>
+            )}
+            <button type="button" className="button button-primary" onClick={tuneDone ? restart : advance} autoFocus>
+              {tuneDone ? "Start over" : "Next chord"} <kbd>↵</kbd>
+            </button>
+          </>
         ) : (
           <>
             <button type="button" className="button button-primary" onClick={submit} disabled={selected.size === 0}>
