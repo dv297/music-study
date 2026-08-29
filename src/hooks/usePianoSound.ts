@@ -15,7 +15,7 @@ const REPLAY_STEP_SECONDS = 0.35;
  * "Check" click already has that gap built in, from the user moving to and
  * clicking the button.
  */
-export const AUTO_SUBMIT_REPLAY_DELAY_SECONDS = 0.2;
+export const AUTO_SUBMIT_REPLAY_DELAY_SECONDS = 0.5;
 
 /** Schedules one synthesized tone on `context`, starting at `startTime`. */
 function scheduleTone(context: AudioContext, midi: number, startTime: number): void {
