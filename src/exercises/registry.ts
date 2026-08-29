@@ -1,5 +1,6 @@
 import type { ComponentType } from "react";
 import { SeventhChordExercise } from "./seventh-chords/SeventhChordExercise";
+import { TwoFiveOneExercise } from "./two-five-one/TwoFiveOneExercise";
 
 export interface ExerciseDefinition {
   id: string;
@@ -15,6 +16,12 @@ export const EXERCISES: ExerciseDefinition[] = [
     title: "7th Chords",
     summary: "Read a jazz chord symbol and build the chord on the keyboard.",
     component: SeventhChordExercise,
+  },
+  {
+    id: "two-five-one",
+    title: "ii–V–I",
+    summary: "See the key, then play the ii, V, and I chords in order.",
+    component: TwoFiveOneExercise,
   },
   {
     id: "intervals",

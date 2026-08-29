@@ -30,12 +30,27 @@ in Settings.
 `z s x d c v g b h n j m` for the lower octave, `q 2 w 3 e r 5 t 6 y 7 u` for the
 upper.
 
+### ii–V–I
+
+The tonic seventh chord appears at the top (e.g. Fmaj7 for the key of F); build
+the ii, V, and I chords in order — iim7, then V7, then back to Imaj7 — submitting
+each on the keyboard before moving to the next. The step tracker shows where you
+are in the progression and marks each chord correct or incorrect as you go; the
+final chord's feedback also shows how many of the three you got right.
+
+Random keys are drawn from the same fourteen practical roots as 7th Chords, and
+grading follows the same rules (any octave or inversion counts, unless you turn
+on **Require the root in the bass**).
+
+Uses the same keyboard shortcuts as 7th Chords.
+
 The other exercises listed on the home screen are placeholders.
 
 ## Layout
 
 ```
-src/lib/          notes.ts (spelling, MIDI), chords.ts (qualities), grade.ts
+src/lib/          notes.ts (spelling, MIDI), chords.ts (qualities), grade.ts,
+                  progressions.ts (ii-V-I)
 src/components/   Piano.tsx
 src/exercises/    registry.ts + one directory per exercise
 ```

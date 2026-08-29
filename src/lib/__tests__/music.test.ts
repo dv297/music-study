@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { buildChord, chordSymbol, QUALITY_BY_ID, randomChord, chordId } from "../chords";
+import { buildChord, chordSymbol, QUALITY_BY_ID, randomChord, chordId, ROOTS } from "../chords";
 import { gradeAnswer } from "../grade";
-import { noteToAscii, parseNote, spellAbove } from "../notes";
+import { noteToAscii, parseNote, pitchClassOf, spellAbove } from "../notes";
+import { buildTwoFiveOne, randomTwoFiveOne } from "../progressions";
 
 const quality = (id: string) => {
   const q = QUALITY_BY_ID.get(id);
@@ -94,6 +95,51 @@ describe("randomChord", () => {
   it("only draws from the enabled qualities", () => {
     for (let i = 0; i < 50; i++) {
       expect(randomChord(["dim7", "min7"]).quality.id).toMatch(/^(dim7|min7)$/);
+    }
+  });
+});
+
+describe("buildTwoFiveOne", () => {
+  it("builds Dm7 – G7 – Cmaj7 in C", () => {
+    const { chords } = buildTwoFiveOne(parseNote("C"));
+    expect(chords.map(chordSymbol)).toEqual(["Dm7", "G7", "Cmaj7"]);
+  });
+
+  it("spells a sharp key without mixing in flats", () => {
+    const { chords } = buildTwoFiveOne(parseNote("F#"));
+    expect(chords.map(chordSymbol)).toEqual(["G♯m7", "C♯7", "F♯maj7"]);
+  });
+
+  it("spells a flat key without mixing in sharps", () => {
+    const { chords } = buildTwoFiveOne(parseNote("Db"));
+    expect(chords.map(chordSymbol)).toEqual(["E♭m7", "A♭7", "D♭maj7"]);
+  });
+
+  it("puts ii a major 2nd and V a perfect 5th above the key, for every practical root", () => {
+    for (const root of ROOTS) {
+      const { chords } = buildTwoFiveOne(root);
+      const keyPitchClass = pitchClassOf(root);
+      expect(pitchClassOf(chords[0].root)).toBe((keyPitchClass + 2) % 12);
+      expect(pitchClassOf(chords[1].root)).toBe((keyPitchClass + 7) % 12);
+      expect(pitchClassOf(chords[2].root)).toBe(keyPitchClass);
+    }
+  });
+
+  it("always uses minor 7th, dominant 7th, and major 7th qualities", () => {
+    for (const root of ROOTS) {
+      const { chords } = buildTwoFiveOne(root);
+      expect(chords.map((chord) => chord.quality.id)).toEqual(["min7", "dom7", "maj7"]);
+    }
+  });
+});
+
+describe("randomTwoFiveOne", () => {
+  it("never repeats the previous key", () => {
+    let previous = buildTwoFiveOne(parseNote("C"));
+    for (let i = 0; i < 200; i++) {
+      const next = randomTwoFiveOne(previous);
+      expect(noteToAscii(next.key)).not.toBe(noteToAscii(previous.key));
+      previous = next;
     }
   });
 });
