@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Piano, type KeyMark } from "../../components/Piano";
 import { Tutorial } from "../../components/Tutorial";
-import { useReplaySound } from "../../hooks/usePianoSound";
+import { AUTO_SUBMIT_REPLAY_DELAY_SECONDS, useReplaySound } from "../../hooks/usePianoSound";
 import { useStoredState } from "../../hooks/useStoredState";
 import { gradeAnswer, type Grade } from "../../lib/grade";
 import { pitchClassOfMidi } from "../../lib/notes";
@@ -108,7 +108,9 @@ export function DiminishedScaleExercise({ params }: ExerciseComponentProps) {
     if (grade || selected.size === 0) return;
     const result = gradeAnswer(scale, [...selected], { requireRootInBass: false });
     setGrade(result);
-    if (result.correct) playReplay(scaleReplayGroups(scale.tones, LOW_MIDI));
+    if (result.correct) {
+      playReplay(scaleReplayGroups(scale.tones, LOW_MIDI), autoSubmit ? AUTO_SUBMIT_REPLAY_DELAY_SECONDS : 0);
+    }
     setStats((previous) => {
       const streak = result.correct ? previous.streak + 1 : 0;
       return {
@@ -118,7 +120,7 @@ export function DiminishedScaleExercise({ params }: ExerciseComponentProps) {
         bestStreak: Math.max(previous.bestStreak, streak),
       };
     });
-  }, [grade, playReplay, scale, selected]);
+  }, [autoSubmit, grade, playReplay, scale, selected]);
 
   const clear = useCallback(() => {
     if (grade) return;

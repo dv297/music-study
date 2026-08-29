@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Piano, type KeyMark } from "../../components/Piano";
 import { Tutorial } from "../../components/Tutorial";
-import { useReplaySound } from "../../hooks/usePianoSound";
+import { AUTO_SUBMIT_REPLAY_DELAY_SECONDS, useReplaySound } from "../../hooks/usePianoSound";
 import { useStoredState } from "../../hooks/useStoredState";
 import { chordSymbol, chordToneNames, findRootByAscii, type Chord } from "../../lib/chords";
 import { gradeAnswer, type Grade } from "../../lib/grade";
@@ -101,7 +101,9 @@ export function TwoFiveOneExercise({ params }: ExerciseComponentProps) {
       next[step] = result;
       return next;
     });
-    if (result.correct) playReplay(chordReplayGroups(chord.tones, LOW_MIDI));
+    if (result.correct) {
+      playReplay(chordReplayGroups(chord.tones, LOW_MIDI), autoSubmit ? AUTO_SUBMIT_REPLAY_DELAY_SECONDS : 0);
+    }
     if (onLastStep) {
       const allCorrect = Boolean(grades[0]?.correct) && Boolean(grades[1]?.correct) && result.correct;
       setStats((previous) => {
@@ -114,7 +116,7 @@ export function TwoFiveOneExercise({ params }: ExerciseComponentProps) {
         };
       });
     }
-  }, [chord, grade, grades, onLastStep, playReplay, requireRootInBass, selected, step]);
+  }, [autoSubmit, chord, grade, grades, onLastStep, playReplay, requireRootInBass, selected, step]);
 
   const clear = useCallback(() => {
     if (grade) return;

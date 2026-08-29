@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Piano, type KeyMark } from "../../components/Piano";
 import { Tutorial } from "../../components/Tutorial";
-import { useReplaySound } from "../../hooks/usePianoSound";
+import { AUTO_SUBMIT_REPLAY_DELAY_SECONDS, useReplaySound } from "../../hooks/usePianoSound";
 import { useStoredState } from "../../hooks/useStoredState";
 import { gradeAnswer, type Grade } from "../../lib/grade";
 import { MODE_QUALITIES, modeId, type Mode, modeSymbol, modeToneNames, parseModeId, randomMode } from "../../lib/modes";
@@ -99,7 +99,9 @@ export function ModesExercise({ params }: ExerciseComponentProps) {
     if (grade || selected.size === 0) return;
     const result = gradeAnswer(mode, [...selected], { requireRootInBass: false });
     setGrade(result);
-    if (result.correct) playReplay(scaleReplayGroups(mode.tones, LOW_MIDI));
+    if (result.correct) {
+      playReplay(scaleReplayGroups(mode.tones, LOW_MIDI), autoSubmit ? AUTO_SUBMIT_REPLAY_DELAY_SECONDS : 0);
+    }
     setStats((previous) => {
       const streak = result.correct ? previous.streak + 1 : 0;
       return {
@@ -109,7 +111,7 @@ export function ModesExercise({ params }: ExerciseComponentProps) {
         bestStreak: Math.max(previous.bestStreak, streak),
       };
     });
-  }, [grade, mode, playReplay, selected]);
+  }, [autoSubmit, grade, mode, playReplay, selected]);
 
   const clear = useCallback(() => {
     if (grade) return;
