@@ -107,3 +107,8 @@ const SHARP_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#",
 export function midiToName(midi: number): string {
   return `${SHARP_NAMES[pitchClassOfMidi(midi)]}${octaveOfMidi(midi)}`;
 }
+
+/** Standard A440 tuning; MIDI 69 is A4. */
+export function midiToFrequency(midi: number): number {
+  return 440 * Math.pow(2, (midi - 69) / 12);
+}

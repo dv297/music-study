@@ -1,4 +1,5 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
+import { usePianoSound } from "../hooks/usePianoSound";
 import { isBlackKey, midiToName, octaveOfMidi, pitchClassOfMidi } from "../lib/notes";
 
 export type KeyMark = "correct" | "extra" | "missing";
@@ -12,6 +13,8 @@ interface PianoProps {
   marks?: ReadonlyMap<number, KeyMark>;
   showNoteNames?: boolean;
   disabled?: boolean;
+  /** Plays a synthesized tone when a key is pressed (not released). */
+  playSound?: boolean;
 }
 
 /**
@@ -73,8 +76,18 @@ export function Piano({
   marks,
   showNoteNames = false,
   disabled = false,
+  playSound = false,
 }: PianoProps) {
   const { keys, whiteCount } = useMemo(() => layOutKeys(lowMidi, highMidi), [lowMidi, highMidi]);
+  const playNote = usePianoSound(playSound);
+
+  // Kept in sync via effect (rather than read during render) so the
+  // keyboard handler below can check it without needing `selected` in its
+  // own deps — that would reinstall the listener on every keystroke.
+  const selectedRef = useRef(selected);
+  useEffect(() => {
+    selectedRef.current = selected;
+  });
 
   useEffect(() => {
     if (disabled) return;
@@ -85,11 +98,19 @@ export function Piano({
       const midi = lowMidi + offset;
       if (midi > highMidi) return;
       event.preventDefault();
+      if (!selectedRef.current.has(midi)) playNote(midi);
       onToggle(midi);
     }
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [disabled, highMidi, lowMidi, onToggle]);
+  }, [disabled, highMidi, lowMidi, onToggle, playNote]);
+
+  // A fresh closure each render (same as PianoKey's own onClick), so it's
+  // always consistent with the latest `selected` without needing a ref.
+  const handleToggle = (midi: number) => {
+    if (!selected.has(midi)) playNote(midi);
+    onToggle(midi);
+  };
 
   const whiteWidth = 100 / whiteCount;
 
@@ -108,7 +129,7 @@ export function Piano({
               mark={marks?.get(key.midi)}
               showNoteNames={showNoteNames}
               disabled={disabled}
-              onToggle={onToggle}
+              onToggle={handleToggle}
             />
           ))}
         {keys
@@ -126,7 +147,7 @@ export function Piano({
               mark={marks?.get(key.midi)}
               showNoteNames={showNoteNames}
               disabled={disabled}
-              onToggle={onToggle}
+              onToggle={handleToggle}
             />
           ))}
       </div>

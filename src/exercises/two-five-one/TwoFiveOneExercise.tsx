@@ -28,6 +28,7 @@ export function TwoFiveOneExercise({ params }: ExerciseComponentProps) {
   const [requireRootInBass, setRequireRootInBass] = useStoredState(`${SETTINGS_PREFIX}requireRootInBass`, false);
   const [showNoteNames, setShowNoteNames] = useStoredState(`${SETTINGS_PREFIX}showNoteNames`, false);
   const [autoSubmit, setAutoSubmit] = useStoredState(`${SETTINGS_PREFIX}autoSubmit`, false);
+  const [playSound, setPlaySound] = useStoredState(`${SETTINGS_PREFIX}playSound`, true);
 
   // A ?key=Bb param pins the opening progression instead of drawing a
   // random one, so a Playwright test can land on a known ii–V–I.
@@ -198,6 +199,7 @@ export function TwoFiveOneExercise({ params }: ExerciseComponentProps) {
         marks={marks}
         showNoteNames={showNoteNames}
         disabled={Boolean(grade)}
+        playSound={playSound}
       />
 
       <div className="actions">
@@ -254,6 +256,8 @@ export function TwoFiveOneExercise({ params }: ExerciseComponentProps) {
         onShowNoteNamesChange={setShowNoteNames}
         autoSubmit={autoSubmit}
         onAutoSubmitChange={setAutoSubmit}
+        playSound={playSound}
+        onPlaySoundChange={setPlaySound}
         onReset={() => setStats(EMPTY_STATS)}
       />
     </div>
@@ -353,6 +357,8 @@ interface SettingsProps {
   onShowNoteNamesChange: (value: boolean) => void;
   autoSubmit: boolean;
   onAutoSubmitChange: (value: boolean) => void;
+  playSound: boolean;
+  onPlaySoundChange: (value: boolean) => void;
   onReset: () => void;
 }
 
@@ -363,6 +369,8 @@ function Settings({
   onShowNoteNamesChange,
   autoSubmit,
   onAutoSubmitChange,
+  playSound,
+  onPlaySoundChange,
   onReset,
 }: SettingsProps) {
   return (
@@ -394,6 +402,10 @@ function Settings({
               onChange={(event) => onAutoSubmitChange(event.target.checked)}
             />
             <span>Check automatically once enough notes are selected</span>
+          </label>
+          <label className="checkbox">
+            <input type="checkbox" checked={playSound} onChange={(event) => onPlaySoundChange(event.target.checked)} />
+            <span>Play a sound when a note is pressed</span>
           </label>
         </fieldset>
 

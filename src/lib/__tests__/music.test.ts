@@ -11,7 +11,7 @@ import {
   ROOTS,
 } from "../chords";
 import { gradeAnswer } from "../grade";
-import { noteToAscii, parseNote, pitchClassOf, spellAbove } from "../notes";
+import { midiToFrequency, noteToAscii, parseNote, pitchClassOf, spellAbove } from "../notes";
 import { buildTwoFiveOne, randomTwoFiveOne } from "../progressions";
 import { pickFromBag } from "../random";
 import { findStandard, MISTY, standardSteps } from "../standards";
@@ -54,6 +54,21 @@ describe("spelling", () => {
 
   it("wraps letters past B", () => {
     expect(noteToAscii(spellAbove(parseNote("B"), 2, 4))).toBe("D#");
+  });
+});
+
+describe("midiToFrequency", () => {
+  it("tunes A4 (MIDI 69) to 440Hz", () => {
+    expect(midiToFrequency(69)).toBeCloseTo(440);
+  });
+
+  it("doubles frequency an octave up and halves it an octave down", () => {
+    expect(midiToFrequency(81)).toBeCloseTo(880);
+    expect(midiToFrequency(57)).toBeCloseTo(220);
+  });
+
+  it("tunes middle C (MIDI 60) to ~261.63Hz", () => {
+    expect(midiToFrequency(60)).toBeCloseTo(261.63, 1);
   });
 });
 

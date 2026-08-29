@@ -46,6 +46,7 @@ function StandardPractice({ standard, params }: { standard: JazzStandard; params
   const [requireRootInBass, setRequireRootInBass] = useStoredState(`${SETTINGS_PREFIX}requireRootInBass`, false);
   const [showNoteNames, setShowNoteNames] = useStoredState(`${SETTINGS_PREFIX}showNoteNames`, false);
   const [autoSubmit, setAutoSubmit] = useStoredState(`${SETTINGS_PREFIX}autoSubmit`, false);
+  const [playSound, setPlaySound] = useStoredState(`${SETTINGS_PREFIX}playSound`, true);
 
   const steps = useMemo(() => standardSteps(standard), [standard]);
   const lastStep = steps.length - 1;
@@ -185,6 +186,7 @@ function StandardPractice({ standard, params }: { standard: JazzStandard; params
         marks={marks}
         showNoteNames={showNoteNames}
         disabled={Boolean(grade)}
+        playSound={playSound}
       />
 
       <div className="actions">
@@ -228,6 +230,8 @@ function StandardPractice({ standard, params }: { standard: JazzStandard; params
         onShowNoteNamesChange={setShowNoteNames}
         autoSubmit={autoSubmit}
         onAutoSubmitChange={setAutoSubmit}
+        playSound={playSound}
+        onPlaySoundChange={setPlaySound}
         onRestart={restart}
       />
     </div>
@@ -308,6 +312,8 @@ interface SettingsProps {
   onShowNoteNamesChange: (value: boolean) => void;
   autoSubmit: boolean;
   onAutoSubmitChange: (value: boolean) => void;
+  playSound: boolean;
+  onPlaySoundChange: (value: boolean) => void;
   onRestart: () => void;
 }
 
@@ -318,6 +324,8 @@ function Settings({
   onShowNoteNamesChange,
   autoSubmit,
   onAutoSubmitChange,
+  playSound,
+  onPlaySoundChange,
   onRestart,
 }: SettingsProps) {
   return (
@@ -349,6 +357,10 @@ function Settings({
               onChange={(event) => onAutoSubmitChange(event.target.checked)}
             />
             <span>Check automatically once enough notes are selected</span>
+          </label>
+          <label className="checkbox">
+            <input type="checkbox" checked={playSound} onChange={(event) => onPlaySoundChange(event.target.checked)} />
+            <span>Play a sound when a note is pressed</span>
           </label>
         </fieldset>
 
