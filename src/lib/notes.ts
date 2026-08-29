@@ -56,7 +56,15 @@ export function parseNote(name: string): SpelledNote {
   if (!match) throw new Error(`Not a note name: "${name}"`);
   const letter = match[1].toUpperCase() as Letter;
   const accidental =
-    match[2] === "bb" ? -2 : match[2] === "b" ? -1 : match[2] === "#" ? 1 : match[2] === "##" || match[2] === "x" ? 2 : 0;
+    match[2] === "bb"
+      ? -2
+      : match[2] === "b"
+        ? -1
+        : match[2] === "#"
+          ? 1
+          : match[2] === "##" || match[2] === "x"
+            ? 2
+            : 0;
   return { letter, accidental };
 }
 
@@ -70,7 +78,7 @@ export function spellAbove(root: SpelledNote, letterSteps: number, semitones: nu
   const letter = LETTERS[(rootLetterIndex + letterSteps) % 7];
   const targetPitchClass = (pitchClassOf(root) + semitones) % 12;
   // Map the offset into -6..5 so a natural never comes back as a triple sharp.
-  const accidental = (((targetPitchClass - NATURAL_PITCH_CLASS[letter] + 6) % 12) + 12) % 12 - 6;
+  const accidental = ((((targetPitchClass - NATURAL_PITCH_CLASS[letter] + 6) % 12) + 12) % 12) - 6;
   return { letter, accidental };
 }
 

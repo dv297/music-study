@@ -19,8 +19,32 @@ interface PianoProps {
  * two rows mirror the octaves the way a DAW's typing keyboard does.
  */
 const TYPING_KEYS: Record<string, number> = {
-  z: 0, s: 1, x: 2, d: 3, c: 4, v: 5, g: 6, b: 7, h: 8, n: 9, j: 10, m: 11, ",": 12,
-  q: 12, "2": 13, w: 14, "3": 15, e: 16, r: 17, "5": 18, t: 19, "6": 20, y: 21, "7": 22, u: 23, i: 24,
+  z: 0,
+  s: 1,
+  x: 2,
+  d: 3,
+  c: 4,
+  v: 5,
+  g: 6,
+  b: 7,
+  h: 8,
+  n: 9,
+  j: 10,
+  m: 11,
+  ",": 12,
+  q: 12,
+  "2": 13,
+  w: 14,
+  "3": 15,
+  e: 16,
+  r: 17,
+  "5": 18,
+  t: 19,
+  "6": 20,
+  y: 21,
+  "7": 22,
+  u: 23,
+  i: 24,
 };
 
 interface PlacedKey {
@@ -126,12 +150,7 @@ function PianoKey({ midi, black, style, selected, mark, showNoteNames, disabled,
   const isC = pitchClassOfMidi(midi) === 0;
   const label = showNoteNames ? name.replace(/\d$/, "") : isC ? `C${octaveOfMidi(midi)}` : "";
 
-  const className = [
-    "key",
-    black ? "key-black" : "key-white",
-    selected ? "is-selected" : "",
-    mark ? `is-${mark}` : "",
-  ]
+  const className = ["key", black ? "key-black" : "key-white", selected ? "is-selected" : "", mark ? `is-${mark}` : ""]
     .filter(Boolean)
     .join(" ");
 

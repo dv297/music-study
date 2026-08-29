@@ -14,9 +14,7 @@ export function App() {
         {exercise && <span className="app-breadcrumb">{exercise.title}</span>}
       </header>
 
-      <main className="app-main">
-        {exercise?.component ? <exercise.component params={params} /> : <Home />}
-      </main>
+      <main className="app-main">{exercise?.component ? <exercise.component params={params} /> : <Home />}</main>
     </div>
   );
 }
