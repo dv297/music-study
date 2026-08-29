@@ -78,6 +78,14 @@ export const MODE_QUALITIES: ModeQuality[] = [
 
 const QUALITY_BY_ID = new Map(MODE_QUALITIES.map((q) => [q.id, q]));
 
+function requireModeQuality(id: string): ModeQuality {
+  const quality = QUALITY_BY_ID.get(id);
+  if (!quality) throw new Error(`missing mode quality ${id}`);
+  return quality;
+}
+
+const IONIAN = requireModeQuality("ionian");
+
 export interface Mode {
   root: SpelledNote;
   quality: ModeQuality;
@@ -134,4 +142,66 @@ export function randomMode(
   }
   const { value, used: nextUsed } = pickFromBag(candidates, modeId, used, random);
   return { mode: value, used: nextUsed };
+}
+
+/** Looks up a mode quality by id, e.g. "dorian" — see MODE_QUALITIES. */
+export function findModeQuality(id: string): ModeQuality | undefined {
+  return QUALITY_BY_ID.get(id);
+}
+
+export type DegreeAlteration = "flat" | "natural" | "sharp";
+
+/**
+ * How each of the seven scale degrees is altered relative to the major
+ * scale (Ionian) — e.g. Dorian's 3rd and 7th come back "flat" and the rest
+ * "natural". Root-independent: the same formula applies no matter what the
+ * mode is built on.
+ */
+export function modeDegreeAlterations(quality: ModeQuality): DegreeAlteration[] {
+  return quality.intervals.map(([, semitones], index) => {
+    const diff = semitones - IONIAN.intervals[index][1];
+    if (diff === 0) return "natural";
+    if (diff === -1) return "flat";
+    if (diff === 1) return "sharp";
+    throw new Error(`unexpected ${diff}-semitone alteration on degree ${index + 1} of ${quality.name}`);
+  });
+}
+
+export interface DegreeGrade {
+  correct: boolean;
+  /** 1-based degrees the answer got right. */
+  correctDegrees: number[];
+  /** 1-based degrees the answer got wrong, with what they should have been. */
+  wrongDegrees: { degree: number; expected: DegreeAlteration }[];
+}
+
+/** Grades a per-degree sharp/flat/natural answer (index 0 = degree 1) against a mode's real formula. */
+export function gradeModeDegrees(quality: ModeQuality, answer: readonly DegreeAlteration[]): DegreeGrade {
+  const expected = modeDegreeAlterations(quality);
+  const correctDegrees: number[] = [];
+  const wrongDegrees: DegreeGrade["wrongDegrees"] = [];
+  expected.forEach((alteration, index) => {
+    const degree = index + 1;
+    if (answer[index] === alteration) correctDegrees.push(degree);
+    else wrongDegrees.push({ degree, expected: alteration });
+  });
+  return { correct: wrongDegrees.length === 0, correctDegrees, wrongDegrees };
+}
+
+/**
+ * Pick a random mode quality from the enabled ones — no root involved, since
+ * degree alterations don't depend on one. Avoids repeating a quality already
+ * used this cycle — see `pickFromBag` — until the rest of the pool has come
+ * up.
+ */
+export function randomModeQuality(
+  qualityIds: string[],
+  used: ReadonlySet<string> = new Set(),
+  random: () => number = Math.random,
+): { quality: ModeQuality; used: Set<string> } {
+  const qualities = qualityIds.map((id) => QUALITY_BY_ID.get(id)).filter((q): q is ModeQuality => Boolean(q));
+  if (qualities.length === 0) throw new Error("No mode qualities enabled");
+
+  const { value, used: nextUsed } = pickFromBag(qualities, (quality) => quality.id, used, random);
+  return { quality: value, used: nextUsed };
 }

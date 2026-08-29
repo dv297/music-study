@@ -13,7 +13,18 @@ import {
 import { gradeAnswer } from "../grade";
 import { midiToFrequency, noteToAscii, parseNote, pitchClassOf, spellAbove } from "../notes";
 import { buildTwoFiveOne, randomTwoFiveOne } from "../progressions";
-import { buildMode, MODE_QUALITIES, modeId, modeSymbol, parseModeId, randomMode } from "../modes";
+import {
+  buildMode,
+  findModeQuality,
+  gradeModeDegrees,
+  MODE_QUALITIES,
+  modeDegreeAlterations,
+  modeId,
+  modeSymbol,
+  parseModeId,
+  randomMode,
+  randomModeQuality,
+} from "../modes";
 import { pickFromBag } from "../random";
 import { buildScale, parseScaleId, randomScale, scaleId, scaleSymbol, SCALE_QUALITIES } from "../scales";
 import { findStandard, MISTY, standardSteps } from "../standards";
@@ -444,6 +455,154 @@ describe("modes", () => {
       expect(picked.mode.quality.id).toBe("locrian");
       used = picked.used;
     }
+  });
+});
+
+describe("modeDegreeAlterations", () => {
+  const modeQuality = (id: string) => {
+    const q = findModeQuality(id);
+    if (!q) throw new Error(`missing mode quality ${id}`);
+    return q;
+  };
+
+  it("finds nothing altered in Ionian", () => {
+    expect(modeDegreeAlterations(modeQuality("ionian"))).toEqual([
+      "natural",
+      "natural",
+      "natural",
+      "natural",
+      "natural",
+      "natural",
+      "natural",
+    ]);
+  });
+
+  it("flattens the 3rd and 7th in Dorian", () => {
+    expect(modeDegreeAlterations(modeQuality("dorian"))).toEqual([
+      "natural",
+      "natural",
+      "flat",
+      "natural",
+      "natural",
+      "natural",
+      "flat",
+    ]);
+  });
+
+  it("sharps only the 4th in Lydian", () => {
+    expect(modeDegreeAlterations(modeQuality("lydian"))).toEqual([
+      "natural",
+      "natural",
+      "natural",
+      "sharp",
+      "natural",
+      "natural",
+      "natural",
+    ]);
+  });
+
+  it("flattens every degree but the 1st and 4th in Locrian", () => {
+    expect(modeDegreeAlterations(modeQuality("locrian"))).toEqual([
+      "natural",
+      "flat",
+      "flat",
+      "natural",
+      "flat",
+      "flat",
+      "flat",
+    ]);
+  });
+
+  it("nests one more flat per mode going Ionian -> Mixolydian -> Dorian -> Aeolian -> Phrygian -> Locrian", () => {
+    const flatsOf = (id: string) =>
+      modeDegreeAlterations(modeQuality(id))
+        .map((alteration, index) => (alteration === "flat" ? index + 1 : null))
+        .filter((degree): degree is number => degree !== null);
+
+    const order = ["ionian", "mixolydian", "dorian", "aeolian", "phrygian", "locrian"];
+    let previous = flatsOf("ionian");
+    expect(previous).toEqual([]);
+    for (const id of order.slice(1)) {
+      const flats = flatsOf(id);
+      expect(flats.length).toBe(previous.length + 1);
+      expect(flats).toEqual(expect.arrayContaining(previous));
+      previous = flats;
+    }
+  });
+});
+
+describe("findModeQuality", () => {
+  it("finds a mode quality by id", () => {
+    expect(findModeQuality("phrygian")?.name).toBe("Phrygian");
+  });
+
+  it("returns undefined for an unrecognized id", () => {
+    expect(findModeQuality("not-a-mode")).toBeUndefined();
+  });
+});
+
+describe("gradeModeDegrees", () => {
+  it("accepts the exact formula", () => {
+    const dorian = findModeQuality("dorian")!;
+    const answer = modeDegreeAlterations(dorian);
+    const grade = gradeModeDegrees(dorian, answer);
+    expect(grade.correct).toBe(true);
+    expect(grade.correctDegrees).toEqual([1, 2, 3, 4, 5, 6, 7]);
+    expect(grade.wrongDegrees).toEqual([]);
+  });
+
+  it("reports which degrees are wrong and what they should be", () => {
+    const dorian = findModeQuality("dorian")!;
+    // All-natural answer: Dorian actually flattens the 3rd and 7th.
+    const allNatural: Array<"flat" | "natural" | "sharp"> = Array(7).fill("natural");
+    const grade = gradeModeDegrees(dorian, allNatural);
+    expect(grade.correct).toBe(false);
+    expect(grade.wrongDegrees).toEqual([
+      { degree: 3, expected: "flat" },
+      { degree: 7, expected: "flat" },
+    ]);
+    expect(grade.correctDegrees).toEqual([1, 2, 4, 5, 6]);
+  });
+});
+
+describe("randomModeQuality", () => {
+  it("draws every quality in the pool once before any repeat, starting fresh", () => {
+    let used = new Set<string>();
+    const ids = new Set<string>();
+    for (let i = 0; i < MODE_QUALITIES.length; i++) {
+      const { quality, used: nextUsed } = randomModeQuality(
+        MODE_QUALITIES.map((q) => q.id),
+        used,
+      );
+      ids.add(quality.id);
+      used = nextUsed;
+    }
+    expect(ids.size).toBe(MODE_QUALITIES.length);
+  });
+
+  it("never repeats the immediately previous quality, even across a cycle boundary", () => {
+    let used = new Set<string>();
+    const ids: string[] = [];
+    const allIds = MODE_QUALITIES.map((q) => q.id);
+    for (let i = 0; i < MODE_QUALITIES.length * 5; i++) {
+      const { quality, used: nextUsed } = randomModeQuality(allIds, used);
+      ids.push(quality.id);
+      used = nextUsed;
+    }
+    expectNoImmediateRepeats(ids);
+  });
+
+  it("only draws from the enabled qualities", () => {
+    let used = new Set<string>();
+    for (let i = 0; i < 20; i++) {
+      const picked = randomModeQuality(["locrian"], used);
+      expect(picked.quality.id).toBe("locrian");
+      used = picked.used;
+    }
+  });
+
+  it("throws with no qualities enabled", () => {
+    expect(() => randomModeQuality([])).toThrow();
   });
 });
 
