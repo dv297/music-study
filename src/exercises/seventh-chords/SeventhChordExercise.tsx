@@ -4,13 +4,16 @@ import { useStoredState } from "../../hooks/useStoredState";
 import {
   CHORD_QUALITIES,
   chordAliasSymbols,
+  chordId,
   chordSymbol,
   chordToneNames,
+  parseChordId,
   randomChord,
   type Chord,
 } from "../../lib/chords";
 import { gradeAnswer, type Grade } from "../../lib/grade";
 import { pitchClassOfMidi } from "../../lib/notes";
+import type { ExerciseComponentProps } from "../types";
 
 const LOW_MIDI = 48; // C3
 const HIGH_MIDI = 72; // C5
@@ -26,16 +29,27 @@ interface Stats {
 
 const EMPTY_STATS: Stats = { attempted: 0, correct: 0, streak: 0, bestStreak: 0 };
 
-export function SeventhChordExercise() {
+export function SeventhChordExercise({ params }: ExerciseComponentProps) {
   const [qualityIds, setQualityIds] = useStoredState<string[]>(`${SETTINGS_PREFIX}qualityIds`, DEFAULT_QUALITY_IDS);
   const [requireRootInBass, setRequireRootInBass] = useStoredState(`${SETTINGS_PREFIX}requireRootInBass`, false);
   const [showNoteNames, setShowNoteNames] = useStoredState(`${SETTINGS_PREFIX}showNoteNames`, false);
   const [autoSubmit, setAutoSubmit] = useStoredState(`${SETTINGS_PREFIX}autoSubmit`, false);
 
+  // A ?chord=Bb:min7b5 param (see chordId()) pins the opening prompt instead
+  // of drawing a random one, so a Playwright test can land on a known chord.
+  const forcedChord = useMemo(() => {
+    const raw = params.get("chord");
+    return raw ? parseChordId(raw.trim()) : undefined;
+  }, [params]);
+
   // Tracks which chords this cycle has already drawn so nextChord() avoids
   // repeating one until the rest of the pool has come up.
   const usedChordsRef = useRef<Set<string>>(new Set());
   const [chord, setChord] = useState<Chord>(() => {
+    if (forcedChord) {
+      usedChordsRef.current = new Set([chordId(forcedChord)]);
+      return forcedChord;
+    }
     const picked = randomChord(qualityIds);
     usedChordsRef.current = picked.used;
     return picked.chord;
@@ -56,8 +70,16 @@ export function SeventhChordExercise() {
     setGrade(null);
   }, [qualityIds]);
 
-  // Re-draw when the settings would make the current chord unreachable.
+  // Re-draw when the settings would make the current chord unreachable —
+  // except a forced chord gets one free pass on mount so it isn't
+  // immediately swapped out by whatever quality settings happen to be
+  // stored from a previous session.
+  const skipReconcileRef = useRef(Boolean(forcedChord));
   useEffect(() => {
+    if (skipReconcileRef.current) {
+      skipReconcileRef.current = false;
+      return;
+    }
     if (!qualityIds.includes(chordRef.current.quality.id)) nextChord();
   }, [nextChord, qualityIds]);
 
