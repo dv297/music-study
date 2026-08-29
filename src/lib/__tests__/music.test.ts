@@ -244,7 +244,7 @@ describe("standardSteps", () => {
   it("plays the head in order, starting and ending on the tonic", () => {
     const steps = standardSteps(MISTY);
     expect(chordSymbol(steps[0].chord)).toBe("E♭maj7");
-    expect(chordSymbol(steps.at(-1)!.chord)).toBe("B♭7");
+    expect(chordSymbol(steps[steps.length - 1].chord)).toBe("B♭7");
     expect(steps[0].barIndex).toBe(1);
     expect(steps[0].formIndex).toBe(1);
   });
