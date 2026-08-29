@@ -23,9 +23,11 @@ async function stubAudioContext(page: import("@playwright/test").Page) {
     }
     class FakeOscillator extends FakeNode {
       frequency = new FakeParam();
-      start() {
+      start(startTime?: number) {
         // @ts-expect-error test-only global
         window.__oscillatorStarts = (window.__oscillatorStarts ?? 0) + 1;
+        // @ts-expect-error test-only global
+        (window.__oscillatorStartTimes ??= []).push(startTime ?? 0);
       }
       stop() {}
     }
@@ -55,6 +57,9 @@ async function stubAudioContext(page: import("@playwright/test").Page) {
 
 const oscillatorStarts = (page: import("@playwright/test").Page) =>
   page.evaluate(() => (window as unknown as { __oscillatorStarts: number }).__oscillatorStarts);
+
+const oscillatorStartTimes = (page: import("@playwright/test").Page) =>
+  page.evaluate(() => (window as unknown as { __oscillatorStartTimes: number[] }).__oscillatorStartTimes);
 
 test("pressing a key plays a tone by default", async ({ page }) => {
   await stubAudioContext(page);
@@ -147,6 +152,42 @@ test("unchecking the replay setting stops a correct answer from replaying", asyn
   await expect(page.locator(".verdict")).toContainText("Correct.");
 
   expect(await oscillatorStarts(page)).toBe(4);
+});
+
+test("auto-submit delays the replay by 200ms so it doesn't collide with the triggering note", async ({ page }) => {
+  await stubAudioContext(page);
+  await page.goto("/#/exercise/seventh-chords?chord=C:maj7");
+
+  await page.click("summary");
+  await page.getByText("Check automatically once enough notes are selected").click();
+
+  // The 4th note completes the chord and triggers auto-submit itself, with
+  // no separate "Check" click.
+  for (const note of ["C4", "E4", "G4", "B4"]) {
+    await page.getByRole("button", { name: note, exact: true }).click();
+  }
+  await expect(page.locator(".verdict")).toContainText("Correct.");
+
+  // 12 tones total: the 4 key presses (undelayed), then the 8-tone replay.
+  expect(await oscillatorStarts(page)).toBe(4 + 8);
+
+  const startTimes = await oscillatorStartTimes(page);
+  expect(startTimes.slice(0, 4)).toEqual([0, 0, 0, 0]);
+  expect(startTimes[4]).toBeCloseTo(0.2, 5);
+});
+
+test("a manual check has no extra delay before the replay", async ({ page }) => {
+  await stubAudioContext(page);
+  await page.goto("/#/exercise/seventh-chords?chord=C:maj7");
+
+  for (const note of ["C4", "E4", "G4", "B4"]) {
+    await page.getByRole("button", { name: note, exact: true }).click();
+  }
+  await page.getByRole("button", { name: "Check" }).click();
+  await expect(page.locator(".verdict")).toContainText("Correct.");
+
+  const startTimes = await oscillatorStartTimes(page);
+  expect(startTimes[4]).toBe(0);
 });
 
 test("a correct scale answer replays each note once, with no trailing block chord", async ({ page }) => {

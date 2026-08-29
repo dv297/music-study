@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Piano, type KeyMark } from "../../components/Piano";
 import { Tutorial } from "../../components/Tutorial";
-import { useReplaySound } from "../../hooks/usePianoSound";
+import { AUTO_SUBMIT_REPLAY_DELAY_SECONDS, useReplaySound } from "../../hooks/usePianoSound";
 import { useStoredState } from "../../hooks/useStoredState";
 import { chordSymbol, chordToneNames, type Chord } from "../../lib/chords";
 import { gradeAnswer, type Grade } from "../../lib/grade";
@@ -102,12 +102,14 @@ function StandardPractice({ standard, params }: { standard: JazzStandard; params
     if (grade || selected.size === 0) return;
     const result = gradeAnswer(chord, [...selected], { requireRootInBass });
     setGrade(result);
-    if (result.correct) playReplay(chordReplayGroups(chord.tones, LOW_MIDI));
+    if (result.correct) {
+      playReplay(chordReplayGroups(chord.tones, LOW_MIDI), autoSubmit ? AUTO_SUBMIT_REPLAY_DELAY_SECONDS : 0);
+    }
     setStats((previous) => ({
       attempted: previous.attempted + 1,
       correct: previous.correct + (result.correct ? 1 : 0),
     }));
-  }, [chord, grade, playReplay, requireRootInBass, selected]);
+  }, [autoSubmit, chord, grade, playReplay, requireRootInBass, selected]);
 
   const clear = useCallback(() => {
     if (grade) return;

@@ -7,6 +7,16 @@ const PEAK_GAIN = 0.25;
 /** Gap between the start of consecutive notes in a replayed sequence. */
 const REPLAY_STEP_SECONDS = 0.35;
 
+/**
+ * Extra delay to put before a replay when it was triggered by auto-submit.
+ * With auto-submit, grading — and so the replay — fires the instant the
+ * last note is pressed, close enough to that note's own key-press tone to
+ * collide with it; this gives the ear a beat to separate the two. A manual
+ * "Check" click already has that gap built in, from the user moving to and
+ * clicking the button.
+ */
+export const AUTO_SUBMIT_REPLAY_DELAY_SECONDS = 0.2;
+
 /** Schedules one synthesized tone on `context`, starting at `startTime`. */
 function scheduleTone(context: AudioContext, midi: number, startTime: number): void {
   const oscillator = context.createOscillator();
@@ -63,15 +73,19 @@ export function usePianoSound(enabled: boolean): (midi: number) => void {
  * block chord. Used to replay a scale (all one-note groups) or a chord (one
  * note at a time, then a final group with every tone) after a correct
  * answer — see `scaleReplayGroups`/`chordReplayGroups` in `src/lib/replay.ts`.
+ * `delaySeconds` (see `AUTO_SUBMIT_REPLAY_DELAY_SECONDS`) pushes the whole
+ * sequence out without affecting the gap between its own notes.
  */
-export function useReplaySound(enabled: boolean): (midiGroups: readonly (readonly number[])[]) => void {
+export function useReplaySound(
+  enabled: boolean,
+): (midiGroups: readonly (readonly number[])[], delaySeconds?: number) => void {
   const getContext = useAudioContext();
 
   return useCallback(
-    (midiGroups: readonly (readonly number[])[]) => {
+    (midiGroups: readonly (readonly number[])[], delaySeconds = 0) => {
       if (!enabled) return;
       const context = getContext();
-      let startTime = context.currentTime;
+      let startTime = context.currentTime + delaySeconds;
       for (const group of midiGroups) {
         for (const midi of group) scheduleTone(context, midi, startTime);
         startTime += REPLAY_STEP_SECONDS;
