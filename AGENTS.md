@@ -116,6 +116,12 @@ one you already have running on :5173, unless `CI` is set. `@playwright/test` is
 pinned to an exact version rather than a `^` range because it has to match
 whatever Chromium build is actually installed in the environment running it.
 
+`.github/workflows/e2e.yml` runs the e2e suite on every pull request, inside the
+container built from the root `Dockerfile` (`mcr.microsoft.com/playwright`,
+tagged to the same `@playwright/test` version as above — that image ships the
+matching browser build already installed, so CI doesn't download one). Bump
+both pins together if you bump `@playwright/test`.
+
 ## Deploying
 
 Pushes to `main` build and publish to GitHub Pages
