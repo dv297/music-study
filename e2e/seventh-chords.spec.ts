@@ -29,6 +29,41 @@ test("leaving out a note reports it as missing", async ({ page }) => {
   await expect(page.locator(".verdict")).toContainText("missed 1 note");
 });
 
+test("a wrong answer offers a retry that clears the board for another attempt", async ({ page }) => {
+  await page.goto("/#/exercise/seventh-chords?chord=C:maj7");
+
+  for (const note of ["C4", "E4", "G4"]) {
+    await page.getByRole("button", { name: note, exact: true }).click();
+  }
+  await page.getByRole("button", { name: "Check" }).click();
+  await expect(page.locator(".verdict")).toContainText("Not quite");
+
+  await page.getByRole("button", { name: "Retry" }).click();
+
+  await expect(page.locator(".verdict")).not.toContainText("Not quite");
+  await expect(page.getByRole("button", { name: "C4", exact: true })).toHaveAttribute("aria-pressed", "false");
+  await expect(page.getByRole("button", { name: "Check" })).toBeVisible();
+
+  for (const note of ["C4", "E4", "G4", "B4"]) {
+    await page.getByRole("button", { name: note, exact: true }).click();
+  }
+  await page.getByRole("button", { name: "Check" }).click();
+
+  await expect(page.locator(".verdict")).toContainText("Correct.");
+});
+
+test("a correct answer does not offer a retry button", async ({ page }) => {
+  await page.goto("/#/exercise/seventh-chords?chord=C:maj7");
+
+  for (const note of ["C4", "E4", "G4", "B4"]) {
+    await page.getByRole("button", { name: note, exact: true }).click();
+  }
+  await page.getByRole("button", { name: "Check" }).click();
+
+  await expect(page.locator(".verdict")).toContainText("Correct.");
+  await expect(page.getByRole("button", { name: "Retry" })).toHaveCount(0);
+});
+
 test("an unrecognized chord param falls back to a normal prompt instead of breaking", async ({ page }) => {
   await page.goto("/#/exercise/seventh-chords?chord=not-a-real-chord");
 
