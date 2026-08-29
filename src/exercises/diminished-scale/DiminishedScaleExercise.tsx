@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Piano, type KeyMark } from "../../components/Piano";
 import { Tutorial } from "../../components/Tutorial";
+import { useReplaySound } from "../../hooks/usePianoSound";
 import { useStoredState } from "../../hooks/useStoredState";
 import { gradeAnswer, type Grade } from "../../lib/grade";
 import { pitchClassOfMidi } from "../../lib/notes";
+import { scaleReplayGroups } from "../../lib/replay";
 import {
   parseScaleId,
   randomScale,
@@ -35,6 +37,8 @@ export function DiminishedScaleExercise({ params }: ExerciseComponentProps) {
   const [showNoteNames, setShowNoteNames] = useStoredState(`${SETTINGS_PREFIX}showNoteNames`, false);
   const [autoSubmit, setAutoSubmit] = useStoredState(`${SETTINGS_PREFIX}autoSubmit`, false);
   const [playSound, setPlaySound] = useStoredState(`${SETTINGS_PREFIX}playSound`, true);
+  const [replayOnSuccess, setReplayOnSuccess] = useStoredState(`${SETTINGS_PREFIX}replayOnSuccess`, true);
+  const playReplay = useReplaySound(replayOnSuccess);
 
   // A ?scale=Bb:halfWhole param (see scaleId()) pins the opening prompt
   // instead of drawing a random one, so a Playwright test can land on a
@@ -104,6 +108,7 @@ export function DiminishedScaleExercise({ params }: ExerciseComponentProps) {
     if (grade || selected.size === 0) return;
     const result = gradeAnswer(scale, [...selected], { requireRootInBass: false });
     setGrade(result);
+    if (result.correct) playReplay(scaleReplayGroups(scale.tones, LOW_MIDI));
     setStats((previous) => {
       const streak = result.correct ? previous.streak + 1 : 0;
       return {
@@ -113,7 +118,7 @@ export function DiminishedScaleExercise({ params }: ExerciseComponentProps) {
         bestStreak: Math.max(previous.bestStreak, streak),
       };
     });
-  }, [grade, scale, selected]);
+  }, [grade, playReplay, scale, selected]);
 
   const clear = useCallback(() => {
     if (grade) return;
@@ -235,6 +240,8 @@ export function DiminishedScaleExercise({ params }: ExerciseComponentProps) {
         onAutoSubmitChange={setAutoSubmit}
         playSound={playSound}
         onPlaySoundChange={setPlaySound}
+        replayOnSuccess={replayOnSuccess}
+        onReplayOnSuccessChange={setReplayOnSuccess}
         onReset={() => setStats(EMPTY_STATS)}
       />
 
@@ -286,6 +293,8 @@ interface SettingsProps {
   onAutoSubmitChange: (value: boolean) => void;
   playSound: boolean;
   onPlaySoundChange: (value: boolean) => void;
+  replayOnSuccess: boolean;
+  onReplayOnSuccessChange: (value: boolean) => void;
   onReset: () => void;
 }
 
@@ -298,6 +307,8 @@ function Settings({
   onAutoSubmitChange,
   playSound,
   onPlaySoundChange,
+  replayOnSuccess,
+  onReplayOnSuccessChange,
   onReset,
 }: SettingsProps) {
   const toggleQuality = (id: string) => {
@@ -347,6 +358,14 @@ function Settings({
           <label className="checkbox">
             <input type="checkbox" checked={playSound} onChange={(event) => onPlaySoundChange(event.target.checked)} />
             <span>Play a sound when a note is pressed</span>
+          </label>
+          <label className="checkbox">
+            <input
+              type="checkbox"
+              checked={replayOnSuccess}
+              onChange={(event) => onReplayOnSuccessChange(event.target.checked)}
+            />
+            <span>Play the scale back, note by note, after a correct answer</span>
           </label>
         </fieldset>
 

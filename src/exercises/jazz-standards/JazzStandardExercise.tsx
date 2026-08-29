@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Piano, type KeyMark } from "../../components/Piano";
 import { Tutorial } from "../../components/Tutorial";
+import { useReplaySound } from "../../hooks/usePianoSound";
 import { useStoredState } from "../../hooks/useStoredState";
 import { chordSymbol, chordToneNames, type Chord } from "../../lib/chords";
 import { gradeAnswer, type Grade } from "../../lib/grade";
 import { pitchClassOfMidi } from "../../lib/notes";
+import { chordReplayGroups } from "../../lib/replay";
 import { JAZZ_STANDARDS, findStandard, standardSteps, type JazzStandard, type StandardStep } from "../../lib/standards";
 import type { ExerciseComponentProps } from "../types";
 import { JazzStandardsTutorial } from "./Tutorial";
@@ -49,6 +51,8 @@ function StandardPractice({ standard, params }: { standard: JazzStandard; params
   const [showNoteNames, setShowNoteNames] = useStoredState(`${SETTINGS_PREFIX}showNoteNames`, false);
   const [autoSubmit, setAutoSubmit] = useStoredState(`${SETTINGS_PREFIX}autoSubmit`, false);
   const [playSound, setPlaySound] = useStoredState(`${SETTINGS_PREFIX}playSound`, true);
+  const [replayOnSuccess, setReplayOnSuccess] = useStoredState(`${SETTINGS_PREFIX}replayOnSuccess`, true);
+  const playReplay = useReplaySound(replayOnSuccess);
 
   const steps = useMemo(() => standardSteps(standard), [standard]);
   const lastStep = steps.length - 1;
@@ -98,11 +102,12 @@ function StandardPractice({ standard, params }: { standard: JazzStandard; params
     if (grade || selected.size === 0) return;
     const result = gradeAnswer(chord, [...selected], { requireRootInBass });
     setGrade(result);
+    if (result.correct) playReplay(chordReplayGroups(chord.tones, LOW_MIDI));
     setStats((previous) => ({
       attempted: previous.attempted + 1,
       correct: previous.correct + (result.correct ? 1 : 0),
     }));
-  }, [chord, grade, requireRootInBass, selected]);
+  }, [chord, grade, playReplay, requireRootInBass, selected]);
 
   const clear = useCallback(() => {
     if (grade) return;
@@ -234,6 +239,8 @@ function StandardPractice({ standard, params }: { standard: JazzStandard; params
         onAutoSubmitChange={setAutoSubmit}
         playSound={playSound}
         onPlaySoundChange={setPlaySound}
+        replayOnSuccess={replayOnSuccess}
+        onReplayOnSuccessChange={setReplayOnSuccess}
         onRestart={restart}
       />
 
@@ -320,6 +327,8 @@ interface SettingsProps {
   onAutoSubmitChange: (value: boolean) => void;
   playSound: boolean;
   onPlaySoundChange: (value: boolean) => void;
+  replayOnSuccess: boolean;
+  onReplayOnSuccessChange: (value: boolean) => void;
   onRestart: () => void;
 }
 
@@ -332,6 +341,8 @@ function Settings({
   onAutoSubmitChange,
   playSound,
   onPlaySoundChange,
+  replayOnSuccess,
+  onReplayOnSuccessChange,
   onRestart,
 }: SettingsProps) {
   return (
@@ -367,6 +378,14 @@ function Settings({
           <label className="checkbox">
             <input type="checkbox" checked={playSound} onChange={(event) => onPlaySoundChange(event.target.checked)} />
             <span>Play a sound when a note is pressed</span>
+          </label>
+          <label className="checkbox">
+            <input
+              type="checkbox"
+              checked={replayOnSuccess}
+              onChange={(event) => onReplayOnSuccessChange(event.target.checked)}
+            />
+            <span>Play the chord back, note by note then as a block, after a correct answer</span>
           </label>
         </fieldset>
 
