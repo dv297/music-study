@@ -38,6 +38,7 @@ export function SeventhChordExercise({ params }: ExerciseComponentProps) {
     `${SETTINGS_PREFIX}showAlternativeNotation`,
     false,
   );
+  const [playSound, setPlaySound] = useStoredState(`${SETTINGS_PREFIX}playSound`, true);
 
   // A ?chord=Bb:min7b5 param (see chordId()) pins the opening prompt instead
   // of drawing a random one, so a Playwright test can land on a known chord.
@@ -194,6 +195,7 @@ export function SeventhChordExercise({ params }: ExerciseComponentProps) {
         marks={marks}
         showNoteNames={showNoteNames}
         disabled={Boolean(grade)}
+        playSound={playSound}
       />
 
       <div className="actions">
@@ -249,6 +251,8 @@ export function SeventhChordExercise({ params }: ExerciseComponentProps) {
         onAutoSubmitChange={setAutoSubmit}
         showAlternativeNotation={showAlternativeNotation}
         onShowAlternativeNotationChange={setShowAlternativeNotation}
+        playSound={playSound}
+        onPlaySoundChange={setPlaySound}
         onReset={() => setStats(EMPTY_STATS)}
       />
     </div>
@@ -309,6 +313,8 @@ interface SettingsProps {
   onAutoSubmitChange: (value: boolean) => void;
   showAlternativeNotation: boolean;
   onShowAlternativeNotationChange: (value: boolean) => void;
+  playSound: boolean;
+  onPlaySoundChange: (value: boolean) => void;
   onReset: () => void;
 }
 
@@ -323,6 +329,8 @@ function Settings({
   onAutoSubmitChange,
   showAlternativeNotation,
   onShowAlternativeNotationChange,
+  playSound,
+  onPlaySoundChange,
   onReset,
 }: SettingsProps) {
   const toggleQuality = (id: string) => {
@@ -386,6 +394,10 @@ function Settings({
               onChange={(event) => onShowAlternativeNotationChange(event.target.checked)}
             />
             <span>Show alternative notation (e.g. maj7 for △7)</span>
+          </label>
+          <label className="checkbox">
+            <input type="checkbox" checked={playSound} onChange={(event) => onPlaySoundChange(event.target.checked)} />
+            <span>Play a sound when a note is pressed</span>
           </label>
         </fieldset>
 
