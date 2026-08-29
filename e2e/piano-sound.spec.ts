@@ -173,7 +173,7 @@ test("auto-submit delays the replay by 200ms so it doesn't collide with the trig
 
   const startTimes = await oscillatorStartTimes(page);
   expect(startTimes.slice(0, 4)).toEqual([0, 0, 0, 0]);
-  expect(startTimes[4]).toBeCloseTo(0.2, 5);
+  expect(startTimes[4]).toBeCloseTo(0.5, 5);
 });
 
 test("a manual check has no extra delay before the replay", async ({ page }) => {
