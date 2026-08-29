@@ -15,7 +15,7 @@ test("picking Misty from the home page starts at its first chord", async ({ page
 
   await page.getByRole("link", { name: /Misty/ }).click();
 
-  await expect(page.locator(".chord-symbol")).toHaveText("E♭maj7");
+  await expect(page.locator(".chord-symbol")).toHaveText("E♭△7");
   await expect(page.locator(".standard-progress-label")).toContainText("Chord 1 of");
 });
 

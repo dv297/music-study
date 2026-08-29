@@ -26,8 +26,8 @@ export const CHORD_QUALITIES: ChordQuality[] = [
   {
     id: "maj7",
     name: "Major 7th",
-    suffix: "maj7",
-    aliasSuffixes: ["△7", "M7"],
+    suffix: "△7",
+    aliasSuffixes: ["maj7", "M7"],
     intervals: [ROOT, [2, 4], [4, 7], [6, 11]],
     formula: "1 3 5 7",
   },
@@ -50,8 +50,8 @@ export const CHORD_QUALITIES: ChordQuality[] = [
   {
     id: "min7b5",
     name: "Half-diminished",
-    suffix: "m7♭5",
-    aliasSuffixes: ["ø7", "-7♭5"],
+    suffix: "ø7",
+    aliasSuffixes: ["m7♭5", "-7♭5"],
     intervals: [ROOT, [2, 3], [4, 6], [6, 10]],
     formula: "1 ♭3 ♭5 ♭7",
   },
@@ -110,7 +110,7 @@ export function buildChord(root: SpelledNote, quality: ChordQuality): Chord {
   return { root, quality, tones, pitchClasses: tones.map(pitchClassOf) };
 }
 
-/** "C♯m7♭5" */
+/** "C♯ø7" */
 export function chordSymbol(chord: Chord): string {
   return noteToDisplay(chord.root) + chord.quality.suffix;
 }

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   buildChord,
+  chordAliasSymbols,
   chordSymbol,
   QUALITY_BY_ID,
   randomChord,
@@ -59,6 +60,16 @@ describe("spelling", () => {
 describe("symbols", () => {
   it("renders the root with a display accidental", () => {
     expect(chordSymbol(buildChord(parseNote("Bb"), quality("min7")))).toBe("B♭m7");
+  });
+
+  it("defaults to shape notation for major 7th and half-diminished chords", () => {
+    expect(chordSymbol(buildChord(parseNote("D"), quality("maj7")))).toBe("D△7");
+    expect(chordSymbol(buildChord(parseNote("E"), quality("min7b5")))).toBe("Eø7");
+  });
+
+  it("lists the traditional spelling as an alias of the shape notation", () => {
+    expect(chordAliasSymbols(buildChord(parseNote("D"), quality("maj7")))).toEqual(["Dmaj7", "DM7"]);
+    expect(chordAliasSymbols(buildChord(parseNote("E"), quality("min7b5")))).toEqual(["Em7♭5", "E-7♭5"]);
   });
 });
 
@@ -135,19 +146,19 @@ describe("randomChord", () => {
 });
 
 describe("buildTwoFiveOne", () => {
-  it("builds Dm7 – G7 – Cmaj7 in C", () => {
+  it("builds Dm7 – G7 – C△7 in C", () => {
     const { chords } = buildTwoFiveOne(parseNote("C"));
-    expect(chords.map(chordSymbol)).toEqual(["Dm7", "G7", "Cmaj7"]);
+    expect(chords.map(chordSymbol)).toEqual(["Dm7", "G7", "C△7"]);
   });
 
   it("spells a sharp key without mixing in flats", () => {
     const { chords } = buildTwoFiveOne(parseNote("F#"));
-    expect(chords.map(chordSymbol)).toEqual(["G♯m7", "C♯7", "F♯maj7"]);
+    expect(chords.map(chordSymbol)).toEqual(["G♯m7", "C♯7", "F♯△7"]);
   });
 
   it("spells a flat key without mixing in sharps", () => {
     const { chords } = buildTwoFiveOne(parseNote("Db"));
-    expect(chords.map(chordSymbol)).toEqual(["E♭m7", "A♭7", "D♭maj7"]);
+    expect(chords.map(chordSymbol)).toEqual(["E♭m7", "A♭7", "D♭△7"]);
   });
 
   it("puts ii a major 2nd and V a perfect 5th above the key, for every practical root", () => {
@@ -243,7 +254,7 @@ describe("standardSteps", () => {
 
   it("plays the head in order, starting and ending on the tonic", () => {
     const steps = standardSteps(MISTY);
-    expect(chordSymbol(steps[0].chord)).toBe("E♭maj7");
+    expect(chordSymbol(steps[0].chord)).toBe("E♭△7");
     expect(chordSymbol(steps[steps.length - 1].chord)).toBe("B♭7");
     expect(steps[0].barIndex).toBe(1);
     expect(steps[0].formIndex).toBe(1);

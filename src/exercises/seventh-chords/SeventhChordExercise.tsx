@@ -34,6 +34,10 @@ export function SeventhChordExercise({ params }: ExerciseComponentProps) {
   const [requireRootInBass, setRequireRootInBass] = useStoredState(`${SETTINGS_PREFIX}requireRootInBass`, false);
   const [showNoteNames, setShowNoteNames] = useStoredState(`${SETTINGS_PREFIX}showNoteNames`, false);
   const [autoSubmit, setAutoSubmit] = useStoredState(`${SETTINGS_PREFIX}autoSubmit`, false);
+  const [showAlternativeNotation, setShowAlternativeNotation] = useStoredState(
+    `${SETTINGS_PREFIX}showAlternativeNotation`,
+    false,
+  );
 
   // A ?chord=Bb:min7b5 param (see chordId()) pins the opening prompt instead
   // of drawing a random one, so a Playwright test can land on a known chord.
@@ -164,7 +168,9 @@ export function SeventhChordExercise({ params }: ExerciseComponentProps) {
       <header className="prompt">
         <p className="prompt-instruction">Play this chord</p>
         <p className="chord-symbol">{chordSymbol(chord)}</p>
-        {aliases.length > 0 && <p className="chord-aliases">also written {aliases.join(" · ")}</p>}
+        {showAlternativeNotation && aliases.length > 0 && (
+          <p className="chord-aliases">also written {aliases.join(" · ")}</p>
+        )}
       </header>
 
       <div className={`verdict verdict-${grade ? (grade.correct ? "correct" : "incorrect") : "pending"}`}>
@@ -229,6 +235,8 @@ export function SeventhChordExercise({ params }: ExerciseComponentProps) {
         onShowNoteNamesChange={setShowNoteNames}
         autoSubmit={autoSubmit}
         onAutoSubmitChange={setAutoSubmit}
+        showAlternativeNotation={showAlternativeNotation}
+        onShowAlternativeNotationChange={setShowAlternativeNotation}
         onReset={() => setStats(EMPTY_STATS)}
       />
     </div>
@@ -287,6 +295,8 @@ interface SettingsProps {
   onShowNoteNamesChange: (value: boolean) => void;
   autoSubmit: boolean;
   onAutoSubmitChange: (value: boolean) => void;
+  showAlternativeNotation: boolean;
+  onShowAlternativeNotationChange: (value: boolean) => void;
   onReset: () => void;
 }
 
@@ -299,6 +309,8 @@ function Settings({
   onShowNoteNamesChange,
   autoSubmit,
   onAutoSubmitChange,
+  showAlternativeNotation,
+  onShowAlternativeNotationChange,
   onReset,
 }: SettingsProps) {
   const toggleQuality = (id: string) => {
@@ -354,6 +366,14 @@ function Settings({
               onChange={(event) => onAutoSubmitChange(event.target.checked)}
             />
             <span>Check automatically once enough notes are selected</span>
+          </label>
+          <label className="checkbox">
+            <input
+              type="checkbox"
+              checked={showAlternativeNotation}
+              onChange={(event) => onShowAlternativeNotationChange(event.target.checked)}
+            />
+            <span>Show alternative notation (e.g. maj7 for △7)</span>
           </label>
         </fieldset>
 
