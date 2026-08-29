@@ -15,41 +15,41 @@ export function SeventhChordsTutorial() {
         <h3>The seven qualities</h3>
         <ul>
           <li>
-            <strong>Major 7th (△7)</strong> — major triad, major 7th: <code className="tutorial-formula">1 3 5 7</code>.
-            C△7 = C E G B.
+            <strong>Major 7th (△7)</strong> — major triad, major 7th: <code className="formula-chip">1 3 5 7</code>. C△7
+            = C E G B.
           </li>
           <li>
-            <strong>Dominant 7th (7)</strong> — major triad, minor 7th:{" "}
-            <code className="tutorial-formula">1 3 5 ♭7</code>. C7 = C E G B♭. The only difference from a major 7th
-            chord is that one interval — flatten the 7th and a major 7th chord becomes dominant.
+            <strong>Dominant 7th (7)</strong> — major triad, minor 7th: <code className="formula-chip">1 3 5 ♭7</code>.
+            C7 = C E G B♭. The only difference from a major 7th chord is that one interval — flatten the 7th and a major
+            7th chord becomes dominant.
           </li>
           <li>
-            <strong>Minor 7th (m7)</strong> — minor triad, minor 7th:{" "}
-            <code className="tutorial-formula">1 ♭3 5 ♭7</code>. Cm7 = C E♭ G B♭.
+            <strong>Minor 7th (m7)</strong> — minor triad, minor 7th: <code className="formula-chip">1 ♭3 5 ♭7</code>.
+            Cm7 = C E♭ G B♭.
           </li>
           <li>
             <strong>Half-diminished (ø7)</strong> — diminished triad (minor 3rd + diminished 5th), minor 7th:{" "}
-            <code className="tutorial-formula">1 ♭3 ♭5 ♭7</code>. Cø7 = C E♭ G♭ B♭. Same notes as a minor 7th chord with
-            the 5th also dropped a half step.
+            <code className="formula-chip">1 ♭3 ♭5 ♭7</code>. Cø7 = C E♭ G♭ B♭. Same notes as a minor 7th chord with the
+            5th also dropped a half step.
           </li>
           <li>
             <strong>Diminished 7th (°7)</strong> — diminished triad, diminished 7th:{" "}
-            <code className="tutorial-formula">1 ♭3 ♭5 ♭♭7</code>. C°7 = C E♭ G♭ B♭♭. This one is built entirely from
+            <code className="formula-chip">1 ♭3 ♭5 ♭♭7</code>. C°7 = C E♭ G♭ B♭♭. This one is built entirely from
             stacked minor 3rds, which is why it's spelled with a double-flat 7th (enharmonically the same key as A)
             rather than a plain 6th — every interval in the chord has to be some flavor of 3rd.
           </li>
           <li>
             <strong>Minor-major 7th (mMaj7)</strong> — minor triad, major 7th:{" "}
-            <code className="tutorial-formula">1 ♭3 5 7</code>. CmMaj7 = C E♭ G B. A minor chord with a major-7th
-            chord's top note — the sound behind a lot of moody film-score cadences.
+            <code className="formula-chip">1 ♭3 5 7</code>. CmMaj7 = C E♭ G B. A minor chord with a major-7th chord's
+            top note — the sound behind a lot of moody film-score cadences.
           </li>
           <li>
             <strong>Altered dominant (7♯5)</strong> — major triad with a raised 5th, minor 7th:{" "}
-            <code className="tutorial-formula">1 3 ♯5 ♭7</code>. C7♯5 = C E G♯ B♭.
+            <code className="formula-chip">1 3 ♯5 ♭7</code>. C7♯5 = C E G♯ B♭.
           </li>
           <li>
             <strong>Major 7♯5</strong> — major triad with a raised 5th, major 7th:{" "}
-            <code className="tutorial-formula">1 3 ♯5 7</code>. Cmaj7♯5 = C E G♯ B.
+            <code className="formula-chip">1 3 ♯5 7</code>. Cmaj7♯5 = C E G♯ B.
           </li>
         </ul>
       </section>

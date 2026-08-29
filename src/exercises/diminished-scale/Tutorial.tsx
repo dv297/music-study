@@ -11,11 +11,11 @@ export function DiminishedScaleTutorial() {
         <ul>
           <li>
             <strong>Whole-Half</strong> — whole, half, whole, half, whole, half, whole, half from the root:{" "}
-            <code className="tutorial-formula">1 2 ♭3 4 ♭5 ♭6 6 7</code>. C W–H = C D E♭ F G♭ A♭ A B.
+            <code className="formula-chip">1 2 ♭3 4 ♭5 ♭6 6 7</code>. C W–H = C D E♭ F G♭ A♭ A B.
           </li>
           <li>
             <strong>Half-Whole</strong> — half, whole, half, whole, half, whole, half, whole from the root:{" "}
-            <code className="tutorial-formula">1 ♭2 ♯2 3 ♯4 5 6 ♭7</code>. C H–W = C D♭ D♯ E F♯ G A B♭.
+            <code className="formula-chip">1 ♭2 ♯2 3 ♯4 5 6 ♭7</code>. C H–W = C D♭ D♯ E F♯ G A B♭.
           </li>
         </ul>
         <p>
@@ -38,11 +38,11 @@ export function DiminishedScaleTutorial() {
         <h3>Where each form is used</h3>
         <p>
           Whole-Half contains all four notes of a diminished 7th chord (
-          <code className="tutorial-formula">1 ♭3 ♭5 ♭♭7</code>) plus four passing tones, which is why it's played over
+          <code className="formula-chip">1 ♭3 ♭5 ♭♭7</code>) plus four passing tones, which is why it's played over
           diminished 7th chords. Half-Whole contains all four notes of a dominant 7th chord (
-          <code className="tutorial-formula">1 3 5 ♭7</code>) plus the ♭9, ♯9, and ♯11 — the altered tensions jazz
-          players reach for over dominant chords. Leaning on those built-in chord tones, rather than memorizing eight
-          notes as an unbroken string, makes the scale much faster to find under pressure.
+          <code className="formula-chip">1 3 5 ♭7</code>) plus the ♭9, ♯9, and ♯11 — the altered tensions jazz players
+          reach for over dominant chords. Leaning on those built-in chord tones, rather than memorizing eight notes as
+          an unbroken string, makes the scale much faster to find under pressure.
         </p>
         <p>
           Because the scale repeats every minor 3rd, there are only three distinct Whole-Half scales and three distinct

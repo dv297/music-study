@@ -2,6 +2,7 @@ import type { ComponentType } from "react";
 import { DiminishedScaleExercise } from "./diminished-scale/DiminishedScaleExercise";
 import { JazzStandardExercise } from "./jazz-standards/JazzStandardExercise";
 import { ModesExercise } from "./modes/ModesExercise";
+import { ModesDegreesExercise } from "./modes-degrees/ModesDegreesExercise";
 import { SeventhChordExercise } from "./seventh-chords/SeventhChordExercise";
 import { TwoFiveOneExercise } from "./two-five-one/TwoFiveOneExercise";
 import type { ExerciseComponentProps } from "./types";
@@ -55,6 +56,12 @@ export const EXERCISES: ExerciseDefinition[] = [
     title: "Modes",
     summary: "Play the seven modes from any tonic.",
     component: ModesExercise,
+  },
+  {
+    id: "modes-degrees",
+    title: "Modes – Degrees",
+    summary: "Given a mode, mark which scale degrees are sharped or flatted.",
+    component: ModesDegreesExercise,
   },
   {
     id: "jazz-standards",

@@ -9,6 +9,7 @@ const EXERCISE_ROUTES = [
   "/#/exercise/two-five-one?key=C",
   "/#/exercise/diminished-scale?scale=C:wholeHalf",
   "/#/exercise/modes?mode=C:ionian",
+  "/#/exercise/modes-degrees?mode=dorian",
   "/#/exercise/jazz-standards?standard=misty",
 ];
 

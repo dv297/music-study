@@ -18,31 +18,31 @@ export function ModesTutorial() {
         <ul>
           <li>
             <strong>Lydian</strong> — major scale with a raised 4th:{" "}
-            <code className="tutorial-formula">1 2 3 ♯4 5 6 7</code>
+            <code className="formula-chip">1 2 3 ♯4 5 6 7</code>
           </li>
           <li>
             <strong>Ionian (Major)</strong> — the major scale itself:{" "}
-            <code className="tutorial-formula">1 2 3 4 5 6 7</code>
+            <code className="formula-chip">1 2 3 4 5 6 7</code>
           </li>
           <li>
             <strong>Mixolydian</strong> — major scale with a lowered 7th:{" "}
-            <code className="tutorial-formula">1 2 3 4 5 6 ♭7</code>
+            <code className="formula-chip">1 2 3 4 5 6 ♭7</code>
           </li>
           <li>
             <strong>Dorian</strong> — minor scale with a raised 6th:{" "}
-            <code className="tutorial-formula">1 2 ♭3 4 5 6 ♭7</code>
+            <code className="formula-chip">1 2 ♭3 4 5 6 ♭7</code>
           </li>
           <li>
             <strong>Aeolian (Natural Minor)</strong> — the natural minor scale:{" "}
-            <code className="tutorial-formula">1 2 ♭3 4 5 ♭6 ♭7</code>
+            <code className="formula-chip">1 2 ♭3 4 5 ♭6 ♭7</code>
           </li>
           <li>
             <strong>Phrygian</strong> — minor scale with a lowered 2nd:{" "}
-            <code className="tutorial-formula">1 ♭2 ♭3 4 5 ♭6 ♭7</code>
+            <code className="formula-chip">1 ♭2 ♭3 4 5 ♭6 ♭7</code>
           </li>
           <li>
             <strong>Locrian</strong> — minor scale with a lowered 2nd and 5th:{" "}
-            <code className="tutorial-formula">1 ♭2 ♭3 4 ♭5 ♭6 ♭7</code>
+            <code className="formula-chip">1 ♭2 ♭3 4 ♭5 ♭6 ♭7</code>
           </li>
         </ul>
       </section>

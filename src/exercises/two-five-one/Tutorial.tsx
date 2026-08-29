@@ -21,15 +21,15 @@ export function TwoFiveOneTutorial() {
         <ul>
           <li>
             <strong>ii</strong> is a major 2nd above the key, minor 7th quality:{" "}
-            <code className="tutorial-formula">1 ♭3 5 ♭7</code>. In F, that's Gm7.
+            <code className="formula-chip">1 ♭3 5 ♭7</code>. In F, that's Gm7.
           </li>
           <li>
             <strong>V</strong> is a perfect 5th above the key (or a perfect 4th below it), dominant 7th quality:{" "}
-            <code className="tutorial-formula">1 3 5 ♭7</code>. In F, that's C7.
+            <code className="formula-chip">1 3 5 ♭7</code>. In F, that's C7.
           </li>
           <li>
-            <strong>I</strong> is the key itself, major 7th quality: <code className="tutorial-formula">1 3 5 7</code>.
-            In F, that's Fmaj7.
+            <strong>I</strong> is the key itself, major 7th quality: <code className="formula-chip">1 3 5 7</code>. In
+            F, that's Fmaj7.
           </li>
         </ul>
       </section>
