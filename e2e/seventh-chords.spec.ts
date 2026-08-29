@@ -7,7 +7,7 @@ import { expect, test } from "@playwright/test";
 test("answering every note correctly", async ({ page }) => {
   await page.goto("/#/exercise/seventh-chords?chord=C:maj7");
 
-  await expect(page.locator(".chord-symbol")).toHaveText("Cmaj7");
+  await expect(page.locator(".chord-symbol")).toHaveText("C△7");
 
   for (const note of ["C4", "E4", "G4", "B4"]) {
     await page.getByRole("button", { name: note, exact: true }).click();
