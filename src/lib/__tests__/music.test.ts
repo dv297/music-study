@@ -3,6 +3,7 @@ import { buildChord, chordSymbol, QUALITY_BY_ID, randomChord, chordId, ROOTS } f
 import { gradeAnswer } from "../grade";
 import { noteToAscii, parseNote, pitchClassOf, spellAbove } from "../notes";
 import { buildTwoFiveOne, randomTwoFiveOne } from "../progressions";
+import { pickFromBag } from "../random";
 
 const quality = (id: string) => {
   const q = QUALITY_BY_ID.get(id);
@@ -12,6 +13,13 @@ const quality = (id: string) => {
 
 const spelling = (root: string, id: string) =>
   buildChord(parseNote(root), quality(id)).tones.map(noteToAscii);
+
+/** Fails if any two consecutive entries in `sequence` are equal. */
+function expectNoImmediateRepeats(sequence: readonly string[]): void {
+  for (let i = 1; i < sequence.length; i++) {
+    expect(sequence[i]).not.toBe(sequence[i - 1]);
+  }
+}
 
 describe("spelling", () => {
   it("keeps letters distinct in a diminished seventh", () => {
@@ -85,16 +93,34 @@ describe("grading", () => {
 });
 
 describe("randomChord", () => {
-  it("never repeats the previous chord", () => {
-    const previous = buildChord(parseNote("C"), quality("maj7"));
-    for (let i = 0; i < 200; i++) {
-      expect(chordId(randomChord(["maj7"], previous))).not.toBe(chordId(previous));
+  it("draws every chord in the pool once before any repeat, starting fresh", () => {
+    let used = new Set<string>();
+    const ids = new Set<string>();
+    for (let i = 0; i < ROOTS.length; i++) {
+      const { chord, used: nextUsed } = randomChord(["maj7"], used);
+      ids.add(chordId(chord));
+      used = nextUsed;
     }
+    expect(ids.size).toBe(ROOTS.length);
+  });
+
+  it("never repeats the immediately previous chord, even across a cycle boundary", () => {
+    let used = new Set<string>();
+    const ids: string[] = [];
+    for (let i = 0; i < ROOTS.length * 5; i++) {
+      const { chord, used: nextUsed } = randomChord(["maj7"], used);
+      ids.push(chordId(chord));
+      used = nextUsed;
+    }
+    expectNoImmediateRepeats(ids);
   });
 
   it("only draws from the enabled qualities", () => {
+    let used = new Set<string>();
     for (let i = 0; i < 50; i++) {
-      expect(randomChord(["dim7", "min7"]).quality.id).toMatch(/^(dim7|min7)$/);
+      const picked = randomChord(["dim7", "min7"], used);
+      expect(picked.chord.quality.id).toMatch(/^(dim7|min7)$/);
+      used = picked.used;
     }
   });
 });
@@ -134,12 +160,64 @@ describe("buildTwoFiveOne", () => {
 });
 
 describe("randomTwoFiveOne", () => {
-  it("never repeats the previous key", () => {
-    let previous = buildTwoFiveOne(parseNote("C"));
-    for (let i = 0; i < 200; i++) {
-      const next = randomTwoFiveOne(previous);
-      expect(noteToAscii(next.key)).not.toBe(noteToAscii(previous.key));
-      previous = next;
+  it("draws every key in the pool once before any repeat, starting fresh", () => {
+    let used = new Set<string>();
+    const ids = new Set<string>();
+    for (let i = 0; i < ROOTS.length; i++) {
+      const { progression, used: nextUsed } = randomTwoFiveOne(used);
+      ids.add(noteToAscii(progression.key));
+      used = nextUsed;
     }
+    expect(ids.size).toBe(ROOTS.length);
+  });
+
+  it("never repeats the immediately previous key, even across a cycle boundary", () => {
+    let used = new Set<string>();
+    const ids: string[] = [];
+    for (let i = 0; i < ROOTS.length * 5; i++) {
+      const { progression, used: nextUsed } = randomTwoFiveOne(used);
+      ids.push(noteToAscii(progression.key));
+      used = nextUsed;
+    }
+    expectNoImmediateRepeats(ids);
+  });
+});
+
+describe("pickFromBag", () => {
+  it("draws every candidate once before any repeat, starting fresh", () => {
+    const candidates = ["a", "b", "c", "d"];
+    let used = new Set<string>();
+    const values = new Set<string>();
+    for (let i = 0; i < candidates.length; i++) {
+      const picked = pickFromBag(candidates, (item) => item, used);
+      values.add(picked.value);
+      used = picked.used;
+    }
+    expect(values.size).toBe(candidates.length);
+  });
+
+  it("never repeats the immediately previous pick, even across a cycle boundary", () => {
+    const candidates = ["a", "b", "c"];
+    let used = new Set<string>();
+    let previous: string | null = null;
+    for (let i = 0; i < candidates.length * 20; i++) {
+      const picked = pickFromBag(candidates, (item) => item, used);
+      if (previous !== null) expect(picked.value).not.toBe(previous);
+      previous = picked.value;
+      used = picked.used;
+    }
+  });
+
+  it("always returns the only candidate when there is just one", () => {
+    let used = new Set<string>();
+    for (let i = 0; i < 5; i++) {
+      const picked = pickFromBag(["only"], (item) => item, used);
+      expect(picked.value).toBe("only");
+      used = picked.used;
+    }
+  });
+
+  it("throws with no candidates", () => {
+    expect(() => pickFromBag([], (item: string) => item, new Set())).toThrow();
   });
 });

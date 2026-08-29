@@ -1,6 +1,7 @@
 /** Seventh-chord definitions and generation. */
 
 import { noteToAscii, noteToDisplay, parseNote, pitchClassOf, spellAbove, type SpelledNote } from "./notes";
+import { pickFromBag } from "./random";
 
 /** A chord tone as (letter steps above the root, semitones above the root). */
 type Interval = readonly [letterSteps: number, semitones: number];
@@ -127,10 +128,15 @@ export function chordId(chord: Chord): string {
 }
 
 /**
- * Pick a random chord from the enabled qualities, avoiding an immediate repeat
- * so the same symbol never comes up twice in a row.
+ * Pick a random chord from the enabled qualities. Avoids repeating any
+ * chord already used this cycle — see `pickFromBag` — so the same symbol
+ * doesn't come up again until the rest of the pool has been drawn.
  */
-export function randomChord(qualityIds: string[], previous?: Chord | null, random: () => number = Math.random): Chord {
+export function randomChord(
+  qualityIds: string[],
+  used: ReadonlySet<string> = new Set(),
+  random: () => number = Math.random,
+): { chord: Chord; used: Set<string> } {
   const qualities = qualityIds.map((id) => QUALITY_BY_ID.get(id)).filter((q): q is ChordQuality => Boolean(q));
   if (qualities.length === 0) throw new Error("No chord qualities enabled");
 
@@ -138,7 +144,6 @@ export function randomChord(qualityIds: string[], previous?: Chord | null, rando
   for (const root of ROOTS) {
     for (const quality of qualities) candidates.push(buildChord(root, quality));
   }
-  const previousId = previous ? chordId(previous) : null;
-  const pool = candidates.length > 1 ? candidates.filter((c) => chordId(c) !== previousId) : candidates;
-  return pool[Math.floor(random() * pool.length) % pool.length];
+  const { value, used: nextUsed } = pickFromBag(candidates, chordId, used, random);
+  return { chord: value, used: nextUsed };
 }

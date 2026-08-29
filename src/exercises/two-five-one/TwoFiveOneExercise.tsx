@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Piano, type KeyMark } from "../../components/Piano";
 import { useStoredState } from "../../hooks/useStoredState";
 import { chordSymbol, chordToneNames, type Chord } from "../../lib/chords";
@@ -28,7 +28,14 @@ export function TwoFiveOneExercise() {
   const [showNoteNames, setShowNoteNames] = useStoredState(`${SETTINGS_PREFIX}showNoteNames`, false);
   const [autoSubmit, setAutoSubmit] = useStoredState(`${SETTINGS_PREFIX}autoSubmit`, false);
 
-  const [progression, setProgression] = useState<TwoFiveOne>(() => randomTwoFiveOne());
+  // Tracks which keys this cycle has already drawn so nextProgression()
+  // avoids repeating one until the rest of the pool has come up.
+  const usedKeysRef = useRef<Set<string>>(new Set());
+  const [progression, setProgression] = useState<TwoFiveOne>(() => {
+    const picked = randomTwoFiveOne();
+    usedKeysRef.current = picked.used;
+    return picked.progression;
+  });
   const [step, setStep] = useState(0);
   const [selected, setSelected] = useState<ReadonlySet<number>>(() => new Set<number>());
   const [grades, setGrades] = useState<StepGrades>(NO_GRADES);
@@ -42,7 +49,9 @@ export function TwoFiveOneExercise() {
   const wholeCorrect = progressionDone && grades.every((g) => g?.correct);
 
   const nextProgression = useCallback(() => {
-    setProgression((previous) => randomTwoFiveOne(previous));
+    const picked = randomTwoFiveOne(usedKeysRef.current);
+    usedKeysRef.current = picked.used;
+    setProgression(picked.progression);
     setStep(0);
     setSelected(new Set<number>());
     setGrades(NO_GRADES);

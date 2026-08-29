@@ -2,6 +2,7 @@
 
 import { buildChord, QUALITY_BY_ID, ROOTS, type Chord, type ChordQuality } from "./chords";
 import { noteToAscii, spellAbove, type SpelledNote } from "./notes";
+import { pickFromBag } from "./random";
 
 export type Degree = "ii" | "V" | "I";
 
@@ -34,15 +35,14 @@ export function buildTwoFiveOne(key: SpelledNote): TwoFiveOne {
 }
 
 /**
- * Picks a random key from the fourteen practical roots, avoiding an
- * immediate repeat so the same key never comes up twice in a row.
+ * Picks a random key from the fourteen practical roots. Avoids repeating
+ * any key already used this cycle — see `pickFromBag` — so the same key
+ * doesn't come up again until the rest of the pool has been drawn.
  */
 export function randomTwoFiveOne(
-  previous?: TwoFiveOne | null,
+  used: ReadonlySet<string> = new Set(),
   random: () => number = Math.random,
-): TwoFiveOne {
-  const previousKey = previous ? noteToAscii(previous.key) : null;
-  const pool = previousKey ? ROOTS.filter((root) => noteToAscii(root) !== previousKey) : ROOTS;
-  const key = pool[Math.floor(random() * pool.length) % pool.length];
-  return buildTwoFiveOne(key);
+): { progression: TwoFiveOne; used: Set<string> } {
+  const { value: key, used: nextUsed } = pickFromBag(ROOTS, noteToAscii, used, random);
+  return { progression: buildTwoFiveOne(key), used: nextUsed };
 }

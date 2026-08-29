@@ -32,7 +32,14 @@ export function SeventhChordExercise() {
   const [showNoteNames, setShowNoteNames] = useStoredState(`${SETTINGS_PREFIX}showNoteNames`, false);
   const [autoSubmit, setAutoSubmit] = useStoredState(`${SETTINGS_PREFIX}autoSubmit`, false);
 
-  const [chord, setChord] = useState<Chord>(() => randomChord(qualityIds));
+  // Tracks which chords this cycle has already drawn so nextChord() avoids
+  // repeating one until the rest of the pool has come up.
+  const usedChordsRef = useRef<Set<string>>(new Set());
+  const [chord, setChord] = useState<Chord>(() => {
+    const picked = randomChord(qualityIds);
+    usedChordsRef.current = picked.used;
+    return picked.chord;
+  });
   const [selected, setSelected] = useState<ReadonlySet<number>>(() => new Set<number>());
   const [grade, setGrade] = useState<Grade | null>(null);
   const [stats, setStats] = useState<Stats>(EMPTY_STATS);
@@ -42,7 +49,9 @@ export function SeventhChordExercise() {
   chordRef.current = chord;
 
   const nextChord = useCallback(() => {
-    setChord((previous) => randomChord(qualityIds, previous));
+    const picked = randomChord(qualityIds, usedChordsRef.current);
+    usedChordsRef.current = picked.used;
+    setChord(picked.chord);
     setSelected(new Set<number>());
     setGrade(null);
   }, [qualityIds]);
