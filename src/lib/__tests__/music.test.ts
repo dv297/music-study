@@ -13,6 +13,7 @@ import { gradeAnswer } from "../grade";
 import { noteToAscii, parseNote, pitchClassOf, spellAbove } from "../notes";
 import { buildTwoFiveOne, randomTwoFiveOne } from "../progressions";
 import { pickFromBag } from "../random";
+import { findStandard, MISTY, standardSteps } from "../standards";
 
 const quality = (id: string) => {
   const q = QUALITY_BY_ID.get(id);
@@ -225,6 +226,44 @@ describe("randomTwoFiveOne", () => {
       used = nextUsed;
     }
     expectNoImmediateRepeats(ids);
+  });
+});
+
+describe("standardSteps", () => {
+  it("repeats the A section's chords once per A in the AABA form", () => {
+    const steps = standardSteps(MISTY);
+    const aChordCount = MISTY.sections.a.chart.length;
+    const bridgeChordCount = MISTY.sections.bridge.chart.length;
+    expect(steps.length).toBe(aChordCount * 3 + bridgeChordCount);
+
+    const aSteps = steps.filter((step) => step.sectionLabel === "A");
+    expect(aSteps.length).toBe(aChordCount * 3);
+    expect(new Set(aSteps.map((step) => step.formIndex))).toEqual(new Set([1, 2, 4]));
+  });
+
+  it("plays the head in order, starting and ending on the tonic", () => {
+    const steps = standardSteps(MISTY);
+    expect(chordSymbol(steps[0].chord)).toBe("E♭maj7");
+    expect(chordSymbol(steps.at(-1)!.chord)).toBe("B♭7");
+    expect(steps[0].barIndex).toBe(1);
+    expect(steps[0].formIndex).toBe(1);
+  });
+
+  it("numbers bars within each playing of a section starting at 1", () => {
+    const steps = standardSteps(MISTY);
+    const secondA = steps.filter((step) => step.sectionLabel === "A" && step.formIndex === 2);
+    expect(secondA.map((step) => step.barIndex)).toEqual(MISTY.sections.a.chart.map((_, index) => index + 1));
+  });
+});
+
+describe("findStandard", () => {
+  it("finds Misty by id", () => {
+    expect(findStandard("misty")).toBe(MISTY);
+  });
+
+  it("returns undefined for an unknown or null id", () => {
+    expect(findStandard("not-a-standard")).toBeUndefined();
+    expect(findStandard(null)).toBeUndefined();
   });
 });
 

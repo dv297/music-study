@@ -1,5 +1,6 @@
 import { EXERCISES, findExercise } from "./exercises/registry";
 import { useHashRoute } from "./hooks/useHashRoute";
+import { JAZZ_STANDARDS, standardSteps } from "./lib/standards";
 
 export function App() {
   const { exerciseId, params } = useHashRoute();
@@ -20,12 +21,13 @@ export function App() {
 }
 
 function Home() {
+  const exercises = EXERCISES.filter((exercise) => exercise.category !== "standard");
   return (
     <div className="home">
       <h1>Pick an exercise</h1>
       <p className="home-lede">Drills for the theory you want under your fingers, not just in your head.</p>
       <ul className="exercise-list">
-        {EXERCISES.map((exercise) => {
+        {exercises.map((exercise) => {
           const available = Boolean(exercise.component);
           return (
             <li key={exercise.id}>
@@ -46,6 +48,25 @@ function Home() {
           );
         })}
       </ul>
+
+      <section className="home-section">
+        <h1>Jazz Standards</h1>
+        <p className="home-lede">
+          Pick a standard, then play its changes on the piano in the order the head is played.
+        </p>
+        <ul className="exercise-list">
+          {JAZZ_STANDARDS.map((standard) => (
+            <li key={standard.id}>
+              <a className="exercise-card" href={`#/exercise/jazz-standards?standard=${standard.id}`}>
+                <h2>{standard.title}</h2>
+                <p>
+                  {standard.key} · {standardSteps(standard).length} chords
+                </p>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </section>
     </div>
   );
 }

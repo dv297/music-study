@@ -1,4 +1,5 @@
 import type { ComponentType } from "react";
+import { JazzStandardExercise } from "./jazz-standards/JazzStandardExercise";
 import { SeventhChordExercise } from "./seventh-chords/SeventhChordExercise";
 import { TwoFiveOneExercise } from "./two-five-one/TwoFiveOneExercise";
 import type { ExerciseComponentProps } from "./types";
@@ -9,6 +10,13 @@ export interface ExerciseDefinition {
   summary: string;
   /** Exercises without a component are stubs listed on the home screen. */
   component?: ComponentType<ExerciseComponentProps>;
+  /**
+   * Jazz standards get their own section on the home screen, rendered from
+   * `JAZZ_STANDARDS` directly instead of this entry's own card — see Home()
+   * in App.tsx. This entry only exists so hash routing has a component to
+   * dispatch "jazz-standards" to.
+   */
+  category?: "standard";
 }
 
 export const EXERCISES: ExerciseDefinition[] = [
@@ -38,6 +46,13 @@ export const EXERCISES: ExerciseDefinition[] = [
     id: "modes",
     title: "Modes",
     summary: "Play the seven modes from any tonic.",
+  },
+  {
+    id: "jazz-standards",
+    title: "Jazz Standards",
+    summary: "Play the changes to a jazz standard in the order the head is played.",
+    component: JazzStandardExercise,
+    category: "standard",
   },
 ];
 
