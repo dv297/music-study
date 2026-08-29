@@ -1,6 +1,7 @@
 import type { ComponentType } from "react";
 import { DiminishedScaleExercise } from "./diminished-scale/DiminishedScaleExercise";
 import { JazzStandardExercise } from "./jazz-standards/JazzStandardExercise";
+import { ModesExercise } from "./modes/ModesExercise";
 import { SeventhChordExercise } from "./seventh-chords/SeventhChordExercise";
 import { TwoFiveOneExercise } from "./two-five-one/TwoFiveOneExercise";
 import type { ExerciseComponentProps } from "./types";
@@ -53,6 +54,7 @@ export const EXERCISES: ExerciseDefinition[] = [
     id: "modes",
     title: "Modes",
     summary: "Play the seven modes from any tonic.",
+    component: ModesExercise,
   },
   {
     id: "jazz-standards",

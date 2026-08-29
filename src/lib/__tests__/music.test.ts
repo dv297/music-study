@@ -13,6 +13,7 @@ import {
 import { gradeAnswer } from "../grade";
 import { midiToFrequency, noteToAscii, parseNote, pitchClassOf, spellAbove } from "../notes";
 import { buildTwoFiveOne, randomTwoFiveOne } from "../progressions";
+import { buildMode, MODE_QUALITIES, modeId, modeSymbol, parseModeId, randomMode } from "../modes";
 import { pickFromBag } from "../random";
 import { buildScale, parseScaleId, randomScale, scaleId, scaleSymbol, SCALE_QUALITIES } from "../scales";
 import { findStandard, MISTY, standardSteps } from "../standards";
@@ -361,6 +362,86 @@ describe("diminished scales", () => {
     for (let i = 0; i < 50; i++) {
       const picked = randomScale(["halfWhole"], used);
       expect(picked.scale.quality.id).toBe("halfWhole");
+      used = picked.used;
+    }
+  });
+});
+
+describe("modes", () => {
+  const modeQuality = (id: string) => {
+    const q = MODE_QUALITIES.find((quality) => quality.id === id);
+    if (!q) throw new Error(`missing mode quality ${id}`);
+    return q;
+  };
+
+  it("spells every mode from C using only natural and single accidentals", () => {
+    const spellingOf = (id: string) => buildMode(parseNote("C"), modeQuality(id)).tones.map(noteToAscii);
+    expect(spellingOf("ionian")).toEqual(["C", "D", "E", "F", "G", "A", "B"]);
+    expect(spellingOf("dorian")).toEqual(["C", "D", "Eb", "F", "G", "A", "Bb"]);
+    expect(spellingOf("phrygian")).toEqual(["C", "Db", "Eb", "F", "G", "Ab", "Bb"]);
+    expect(spellingOf("lydian")).toEqual(["C", "D", "E", "F#", "G", "A", "B"]);
+    expect(spellingOf("mixolydian")).toEqual(["C", "D", "E", "F", "G", "A", "Bb"]);
+    expect(spellingOf("aeolian")).toEqual(["C", "D", "Eb", "F", "G", "Ab", "Bb"]);
+    expect(spellingOf("locrian")).toEqual(["C", "Db", "Eb", "F", "Gb", "Ab", "Bb"]);
+  });
+
+  it("spells D Dorian on the white keys", () => {
+    const mode = buildMode(parseNote("D"), modeQuality("dorian"));
+    expect(mode.tones.map(noteToAscii)).toEqual(["D", "E", "F", "G", "A", "B", "C"]);
+    expect(mode.pitchClasses).toEqual([2, 4, 5, 7, 9, 11, 0]);
+  });
+
+  it("renders the root with a display accidental", () => {
+    expect(modeSymbol(buildMode(parseNote("Bb"), modeQuality("mixolydian")))).toBe("B♭ Mixolydian");
+  });
+
+  it("round-trips every root and quality through modeId()", () => {
+    for (const root of ROOTS) {
+      for (const q of MODE_QUALITIES) {
+        const mode = buildMode(root, q);
+        expect(parseModeId(modeId(mode))).toEqual(mode);
+      }
+    }
+  });
+
+  it("returns undefined for an unrecognized root, quality, or malformed id", () => {
+    expect(parseModeId("H:dorian")).toBeUndefined();
+    expect(parseModeId("C:not-a-mode")).toBeUndefined();
+    expect(parseModeId("Cdorian")).toBeUndefined();
+    expect(parseModeId("")).toBeUndefined();
+  });
+
+  it("draws every mode in the pool once before any repeat, starting fresh", () => {
+    let used = new Set<string>();
+    const ids = new Set<string>();
+    const poolSize = ROOTS.length * MODE_QUALITIES.length;
+    for (let i = 0; i < poolSize; i++) {
+      const { mode, used: nextUsed } = randomMode(
+        MODE_QUALITIES.map((q) => q.id),
+        used,
+      );
+      ids.add(modeId(mode));
+      used = nextUsed;
+    }
+    expect(ids.size).toBe(poolSize);
+  });
+
+  it("never repeats the immediately previous mode, even across a cycle boundary", () => {
+    let used = new Set<string>();
+    const ids: string[] = [];
+    for (let i = 0; i < ROOTS.length * 5; i++) {
+      const { mode, used: nextUsed } = randomMode(["dorian"], used);
+      ids.push(modeId(mode));
+      used = nextUsed;
+    }
+    expectNoImmediateRepeats(ids);
+  });
+
+  it("only draws from the enabled qualities", () => {
+    let used = new Set<string>();
+    for (let i = 0; i < 50; i++) {
+      const picked = randomMode(["locrian"], used);
+      expect(picked.mode.quality.id).toBe("locrian");
       used = picked.used;
     }
   });
