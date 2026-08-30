@@ -36,7 +36,13 @@ import {
   randomModeQuality,
 } from "../modes";
 import { pickFromBag } from "../random";
-import { chordReplayGroups, scaleReplayGroups, tonesToAscendingMidi } from "../replay";
+import {
+  chordReplayGroups,
+  chordReplayGroupsFromIntervals,
+  intervalsToAscendingMidi,
+  scaleReplayGroups,
+  tonesToAscendingMidi,
+} from "../replay";
 import { buildScale, parseScaleId, randomScale, scaleId, scaleSymbol, SCALE_QUALITIES } from "../scales";
 import { findStandard, MISTY, standardSteps } from "../standards";
 
@@ -266,6 +272,15 @@ describe("altered chords", () => {
     const chord = buildAlteredChord(parseNote("C"), alteredQuality("dom9"));
     expect(chord.tones.map(noteToAscii)).toEqual(["C", "E", "G", "Bb", "D"]);
     expect(chord.pitchClasses).toEqual([0, 4, 7, 10, 2]);
+  });
+
+  it("keeps the 9th's real distance above the root more than an octave, unlike its mod-12 pitch class", () => {
+    const dom9 = buildAlteredChord(parseNote("C"), alteredQuality("dom9"));
+    expect(dom9.semitonesAboveRoot).toEqual([0, 4, 7, 10, 14]);
+    expect(dom9.pitchClasses[4]).toBe(2); // for grading, the 9th and a 2nd are the same pitch class
+
+    const dom13 = buildAlteredChord(parseNote("C"), alteredQuality("dom13"));
+    expect(dom13.semitonesAboveRoot).toEqual([0, 4, 7, 10, 14, 21]);
   });
 
   it("spells the altered ninths with the correct accidental", () => {
@@ -847,5 +862,46 @@ describe("chordReplayGroups", () => {
   it("strikes each tone alone, in ascending order, then every tone together as a block", () => {
     const chord = buildChord(parseNote("C"), quality("maj7"));
     expect(chordReplayGroups(chord.tones, 48)).toEqual([[48], [52], [55], [59], [48, 52, 55, 59]]);
+  });
+});
+
+describe("intervalsToAscendingMidi", () => {
+  const alteredQuality = (id: string) => {
+    const q = ALTERED_QUALITY_BY_ID.get(id);
+    if (!q) throw new Error(`missing altered chord quality ${id}`);
+    return q;
+  };
+
+  it("places a 9th more than an octave above the root, unlike tonesToAscendingMidi's mod-12 folding", () => {
+    const dom9 = buildAlteredChord(parseNote("C"), alteredQuality("dom9"));
+    expect(intervalsToAscendingMidi(dom9.root, dom9.semitonesAboveRoot, 48)).toEqual([48, 52, 55, 58, 62]);
+
+    // Feeding the same tones through the plain (pitch-class-only) helper
+    // would fold the 9th right back down next to the root instead — the
+    // bug this function exists to avoid.
+    expect(tonesToAscendingMidi(dom9.tones, 48)).toEqual([48, 52, 55, 58, 50]);
+  });
+
+  it("keeps a dominant 13th chord strictly ascending — 9th above the 7th, 13th above the 9th", () => {
+    const dom13 = buildAlteredChord(parseNote("C"), alteredQuality("dom13"));
+    const midi = intervalsToAscendingMidi(dom13.root, dom13.semitonesAboveRoot, 48);
+    expect(midi).toEqual([48, 52, 55, 58, 62, 69]);
+    for (let i = 1; i < midi.length; i++) expect(midi[i]).toBeGreaterThan(midi[i - 1]);
+  });
+});
+
+describe("chordReplayGroupsFromIntervals", () => {
+  it("strikes each tone alone, in true ascending order, then every tone together as a block", () => {
+    const dom9Quality = ALTERED_QUALITY_BY_ID.get("dom9");
+    if (!dom9Quality) throw new Error("missing altered chord quality dom9");
+    const dom9 = buildAlteredChord(parseNote("C"), dom9Quality);
+    expect(chordReplayGroupsFromIntervals(dom9.root, dom9.semitonesAboveRoot, 48)).toEqual([
+      [48],
+      [52],
+      [55],
+      [58],
+      [62],
+      [48, 52, 55, 58, 62],
+    ]);
   });
 });

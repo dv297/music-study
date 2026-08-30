@@ -22,12 +22,14 @@ async function stubAudioContext(page: import("@playwright/test").Page) {
       }
     }
     class FakeOscillator extends FakeNode {
-      frequency = new FakeParam();
+      frequency = { value: 0 };
       start(startTime?: number) {
         // @ts-expect-error test-only global
         window.__oscillatorStarts = (window.__oscillatorStarts ?? 0) + 1;
         // @ts-expect-error test-only global
         (window.__oscillatorStartTimes ??= []).push(startTime ?? 0);
+        // @ts-expect-error test-only global
+        (window.__oscillatorFrequencies ??= []).push(this.frequency.value);
       }
       stop() {}
     }
@@ -60,6 +62,9 @@ const oscillatorStarts = (page: import("@playwright/test").Page) =>
 
 const oscillatorStartTimes = (page: import("@playwright/test").Page) =>
   page.evaluate(() => (window as unknown as { __oscillatorStartTimes: number[] }).__oscillatorStartTimes);
+
+const oscillatorFrequencies = (page: import("@playwright/test").Page) =>
+  page.evaluate(() => (window as unknown as { __oscillatorFrequencies: number[] }).__oscillatorFrequencies);
 
 test("pressing a key plays a tone by default", async ({ page }) => {
   await stubAudioContext(page);
@@ -203,4 +208,33 @@ test("a correct scale answer replays each note once, with no trailing block chor
 
   // The 8 key presses above, then the 8 scale notes replayed once each.
   expect(await oscillatorStarts(page)).toBe(8 + 8);
+});
+
+test("a correct altered-chord answer voices the 9th more than an octave above the root, not folded down like a 2nd", async ({
+  page,
+}) => {
+  await stubAudioContext(page);
+  await page.goto("/#/exercise/altered-chords?chord=C:dom9");
+
+  for (const note of ["C4", "E4", "G4", "A#4", "D4"]) {
+    await page.getByRole("button", { name: note, exact: true }).click();
+  }
+  expect(await oscillatorStarts(page)).toBe(5);
+
+  await page.getByRole("button", { name: "Check" }).click();
+  await expect(page.locator(".verdict")).toContainText("Correct.");
+
+  // The 5 key presses above, then the replay: the same 5 tones (root, 3rd,
+  // 5th, b7, 9th) one at a time, then all 5 again together as a block.
+  expect(await oscillatorStarts(page)).toBe(5 + 10);
+
+  const noteByNoteReplay = (await oscillatorFrequencies(page)).slice(5, 10);
+
+  for (let i = 1; i < noteByNoteReplay.length; i++) {
+    expect(noteByNoteReplay[i]).toBeGreaterThan(noteByNoteReplay[i - 1]);
+  }
+  // The 9th (last) must be more than an octave — double the frequency —
+  // above the root (first), not folded down next to it the way treating a
+  // 9th as a plain 2nd would.
+  expect(noteByNoteReplay[4]).toBeGreaterThan(noteByNoteReplay[0] * 2);
 });
