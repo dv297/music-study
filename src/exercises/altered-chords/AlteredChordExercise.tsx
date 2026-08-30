@@ -15,7 +15,7 @@ import {
 } from "../../lib/alteredChords";
 import { gradeAnswer, type Grade } from "../../lib/grade";
 import { pitchClassOfMidi } from "../../lib/notes";
-import { chordReplayGroups } from "../../lib/replay";
+import { chordReplayGroupsFromIntervals } from "../../lib/replay";
 import type { ExerciseComponentProps } from "../types";
 import { AlteredChordsTutorial } from "./Tutorial";
 
@@ -117,7 +117,10 @@ export function AlteredChordExercise({ params }: ExerciseComponentProps) {
     const result = gradeAnswer(chord, [...selected], { requireRootInBass });
     setGrade(result);
     if (result.correct) {
-      playReplay(chordReplayGroups(chord.tones, LOW_MIDI), autoSubmit ? AUTO_SUBMIT_REPLAY_DELAY_SECONDS : 0);
+      playReplay(
+        chordReplayGroupsFromIntervals(chord.root, chord.semitonesAboveRoot, LOW_MIDI),
+        autoSubmit ? AUTO_SUBMIT_REPLAY_DELAY_SECONDS : 0,
+      );
     }
     setStats((previous) => {
       const streak = result.correct ? previous.streak + 1 : 0;

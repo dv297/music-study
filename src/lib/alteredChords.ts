@@ -138,11 +138,20 @@ export interface AlteredChord {
   tones: SpelledNote[];
   /** The chord's pitch classes, in no particular order. */
   pitchClasses: number[];
+  /**
+   * Each tone's real semitone distance above the root (root first,
+   * ascending) — unlike pitchClasses, NOT reduced mod an octave, so a 9th
+   * reads as 14 rather than the 2 a plain 2nd would use. Audio replay needs
+   * this to voice a tension above the octave instead of collapsing it back
+   * down next to the root (see intervalsToAscendingMidi in replay.ts).
+   */
+  semitonesAboveRoot: number[];
 }
 
 export function buildAlteredChord(root: SpelledNote, quality: AlteredChordQuality): AlteredChord {
   const tones = quality.intervals.map(([letterSteps, semitones]) => spellAbove(root, letterSteps, semitones));
-  return { root, quality, tones, pitchClasses: tones.map(pitchClassOf) };
+  const semitonesAboveRoot = quality.intervals.map(([, semitones]) => semitones);
+  return { root, quality, tones, pitchClasses: tones.map(pitchClassOf), semitonesAboveRoot };
 }
 
 /** "C7♯9" */
