@@ -52,6 +52,18 @@ test("a different mode from the same root is spelled differently", async ({ page
   await expect(page.locator(".verdict")).toContainText("Correct.");
 });
 
+test("a forced mode outside a customized quality setting still pins correctly", async ({ page }) => {
+  // Simulates a returning visitor who has disabled every quality but
+  // dorian — exactly the case where the settings-reconcile effect could
+  // mistake a valid pinned prompt for a stale one and redraw it.
+  await page.addInitScript(() => {
+    localStorage.setItem("music-study:modes:qualityIds", JSON.stringify(["dorian"]));
+  });
+  await page.goto("/#/exercise/modes?mode=C:lydian");
+
+  await expect(page.locator(".chord-symbol")).toHaveText("C Lydian");
+});
+
 test("an unrecognized mode param falls back to a normal prompt instead of breaking", async ({ page }) => {
   await page.goto("/#/exercise/modes?mode=not-a-real-mode");
 

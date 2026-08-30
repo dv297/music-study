@@ -53,6 +53,18 @@ test("the half-whole form is spelled differently from the same root", async ({ p
   await expect(page.locator(".verdict")).toContainText("Correct.");
 });
 
+test("a forced scale outside a customized quality setting still pins correctly", async ({ page }) => {
+  // Simulates a returning visitor who has disabled every quality but
+  // wholeHalf — exactly the case where the settings-reconcile effect could
+  // mistake a valid pinned prompt for a stale one and redraw it.
+  await page.addInitScript(() => {
+    localStorage.setItem("music-study:diminished-scale:qualityIds", JSON.stringify(["wholeHalf"]));
+  });
+  await page.goto("/#/exercise/diminished-scale?scale=C:halfWhole");
+
+  await expect(page.locator(".chord-symbol")).toHaveText("C dim (H–W)");
+});
+
 test("an unrecognized scale param falls back to a normal prompt instead of breaking", async ({ page }) => {
   await page.goto("/#/exercise/diminished-scale?scale=not-a-real-scale");
 

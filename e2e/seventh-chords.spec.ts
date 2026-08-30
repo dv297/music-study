@@ -64,6 +64,15 @@ test("a correct answer does not offer a retry button", async ({ page }) => {
   await expect(page.getByRole("button", { name: "Retry" })).toHaveCount(0);
 });
 
+test("a forced chord outside the default quality settings still pins correctly", async ({ page }) => {
+  // "dim7" isn't in the default enabled pool (maj7, dom7, min7, min7b5),
+  // which is exactly the case where the settings-reconcile effect could
+  // mistake a valid pinned prompt for a stale one and redraw it.
+  await page.goto("/#/exercise/seventh-chords?chord=C:dim7");
+
+  await expect(page.locator(".chord-symbol")).toHaveText("C°7");
+});
+
 test("an unrecognized chord param falls back to a normal prompt instead of breaking", async ({ page }) => {
   await page.goto("/#/exercise/seventh-chords?chord=not-a-real-chord");
 

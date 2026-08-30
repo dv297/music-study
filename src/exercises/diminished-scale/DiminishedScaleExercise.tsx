@@ -82,16 +82,18 @@ export function DiminishedScaleExercise({ params }: ExerciseComponentProps) {
     setGrade(null);
   }, [qualityIds]);
 
-  // Re-draw when the settings would make the current scale unreachable —
-  // except a forced scale gets one free pass on mount so it isn't
+  // Re-draw when the settings actually change and would make the current
+  // scale unreachable — a forced scale is exempt on mount so it isn't
   // immediately swapped out by whatever quality settings happen to be
-  // stored from a previous session.
-  const skipReconcileRef = useRef(Boolean(forcedScale));
+  // stored from a previous session. Keyed off the qualityIds reference
+  // itself (rather than a "have I run yet" flag) so this stays a no-op
+  // across React StrictMode's dev-only double-invocation of mount effects —
+  // a flag consumed on the first call would wrongly fire the reconcile on
+  // the second, discarding a still-valid forced scale.
+  const reconciledQualityIdsRef = useRef(qualityIds);
   useEffect(() => {
-    if (skipReconcileRef.current) {
-      skipReconcileRef.current = false;
-      return;
-    }
+    if (reconciledQualityIdsRef.current === qualityIds) return;
+    reconciledQualityIdsRef.current = qualityIds;
     if (!qualityIds.includes(scaleRef.current.quality.id)) nextScale();
   }, [nextScale, qualityIds]);
 
