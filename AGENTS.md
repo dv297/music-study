@@ -96,10 +96,14 @@ starting point for Playwright, not a way to force the whole session.
 
 Follow the same shape for a new exercise's own free variable: parse it out of
 `params` into a `forced<Thing>` with a lookup that returns `undefined` on
-anything unrecognized, use it as the `useState` initializer, and skip past any
-one-time "current prompt isn't reachable under current settings" effect for
-exactly the mount that consumed it (see the `skipReconcileRef` pattern in
-`SeventhChordExercise.tsx`) so it isn't immediately overwritten.
+anything unrecognized, use it as the `useState` initializer, and skip the
+"current prompt isn't reachable under current settings" reconcile effect until
+settings actually change, so a pinned prompt isn't immediately overwritten
+(see the `reconciledQualityIdsRef` pattern in `SeventhChordExercise.tsx`).
+Key the skip off the settings value itself (e.g. comparing the `qualityIds`
+reference) rather than a consume-once boolean flag — a flag gets consumed by
+the first invocation and wrongly fires on the second, and mount effects run
+twice in development under React StrictMode.
 
 ## Testing
 

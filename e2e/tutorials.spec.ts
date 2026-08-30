@@ -6,6 +6,7 @@ import { expect, test } from "@playwright/test";
 
 const EXERCISE_ROUTES = [
   "/#/exercise/seventh-chords?chord=C:maj7",
+  "/#/exercise/altered-chords?chord=C:dom9",
   "/#/exercise/two-five-one?key=C",
   "/#/exercise/diminished-scale?scale=C:wholeHalf",
   "/#/exercise/modes?mode=C:ionian",

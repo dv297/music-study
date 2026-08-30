@@ -1,4 +1,5 @@
 import type { ComponentType } from "react";
+import { AlteredChordExercise } from "./altered-chords/AlteredChordExercise";
 import { DiminishedScaleExercise } from "./diminished-scale/DiminishedScaleExercise";
 import { JazzStandardExercise } from "./jazz-standards/JazzStandardExercise";
 import { ModesExercise } from "./modes/ModesExercise";
@@ -28,6 +29,12 @@ export const EXERCISES: ExerciseDefinition[] = [
     title: "7th Chords",
     summary: "Read a jazz chord symbol and build the chord on the keyboard.",
     component: SeventhChordExercise,
+  },
+  {
+    id: "altered-chords",
+    title: "Altered Chords",
+    summary: "Add a 9th, 11th, or 13th — natural or altered — on top of a 7th chord.",
+    component: AlteredChordExercise,
   },
   {
     id: "two-five-one",

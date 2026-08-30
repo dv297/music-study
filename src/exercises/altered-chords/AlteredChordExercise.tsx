@@ -3,17 +3,26 @@ import { Piano, type KeyMark } from "../../components/Piano";
 import { Tutorial } from "../../components/Tutorial";
 import { AUTO_SUBMIT_REPLAY_DELAY_SECONDS, useReplaySound } from "../../hooks/usePianoSound";
 import { useStoredState } from "../../hooks/useStoredState";
+import {
+  ALTERED_CHORD_QUALITIES,
+  alteredChordAliasSymbols,
+  alteredChordId,
+  alteredChordSymbol,
+  alteredChordToneNames,
+  parseAlteredChordId,
+  randomAlteredChord,
+  type AlteredChord,
+} from "../../lib/alteredChords";
 import { gradeAnswer, type Grade } from "../../lib/grade";
-import { MODE_QUALITIES, modeId, type Mode, modeSymbol, modeToneNames, parseModeId, randomMode } from "../../lib/modes";
 import { pitchClassOfMidi } from "../../lib/notes";
-import { scaleReplayGroups } from "../../lib/replay";
+import { chordReplayGroups } from "../../lib/replay";
 import type { ExerciseComponentProps } from "../types";
-import { ModesTutorial } from "./Tutorial";
+import { AlteredChordsTutorial } from "./Tutorial";
 
 const LOW_MIDI = 48; // C3
 const HIGH_MIDI = 72; // C5
-const DEFAULT_QUALITY_IDS = MODE_QUALITIES.map((quality) => quality.id);
-const SETTINGS_PREFIX = "music-study:modes:";
+const DEFAULT_QUALITY_IDS = ["dom9", "maj9", "min9", "dom13"];
+const SETTINGS_PREFIX = "music-study:altered-chords:";
 
 interface Stats {
   attempted: number;
@@ -24,19 +33,25 @@ interface Stats {
 
 const EMPTY_STATS: Stats = { attempted: 0, correct: 0, streak: 0, bestStreak: 0 };
 
-export function ModesExercise({ params }: ExerciseComponentProps) {
+export function AlteredChordExercise({ params }: ExerciseComponentProps) {
   const [qualityIds, setQualityIds] = useStoredState<string[]>(`${SETTINGS_PREFIX}qualityIds`, DEFAULT_QUALITY_IDS);
+  const [requireRootInBass, setRequireRootInBass] = useStoredState(`${SETTINGS_PREFIX}requireRootInBass`, false);
   const [showNoteNames, setShowNoteNames] = useStoredState(`${SETTINGS_PREFIX}showNoteNames`, false);
   const [autoSubmit, setAutoSubmit] = useStoredState(`${SETTINGS_PREFIX}autoSubmit`, false);
+  const [showAlternativeNotation, setShowAlternativeNotation] = useStoredState(
+    `${SETTINGS_PREFIX}showAlternativeNotation`,
+    false,
+  );
   const [playSound, setPlaySound] = useStoredState(`${SETTINGS_PREFIX}playSound`, true);
   const [replayOnSuccess, setReplayOnSuccess] = useStoredState(`${SETTINGS_PREFIX}replayOnSuccess`, true);
   const playReplay = useReplaySound(replayOnSuccess);
 
-  // A ?mode=Bb:dorian param (see modeId()) pins the opening prompt instead
-  // of drawing a random one, so a Playwright test can land on a known mode.
-  const forcedMode = useMemo(() => {
-    const raw = params.get("mode");
-    return raw ? parseModeId(raw.trim()) : undefined;
+  // A ?chord=Bb:dom7b9 param (see alteredChordId()) pins the opening prompt
+  // instead of drawing a random one, so a Playwright test can land on a
+  // known chord.
+  const forcedChord = useMemo(() => {
+    const raw = params.get("chord");
+    return raw ? parseAlteredChordId(raw.trim()) : undefined;
   }, [params]);
 
   // Computed once for the initial render and fed to useRef/useState's own
@@ -45,48 +60,48 @@ export function ModesExercise({ params }: ExerciseComponentProps) {
   // a lazy initializer) isn't safe. Empty deps are intentional: this is a
   // mount-only pick, same intent as useState's lazy initializer.
   const initialPick = useMemo(() => {
-    if (forcedMode) return { mode: forcedMode, used: new Set([modeId(forcedMode)]) };
-    return randomMode(qualityIds);
+    if (forcedChord) return { chord: forcedChord, used: new Set([alteredChordId(forcedChord)]) };
+    return randomAlteredChord(qualityIds);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Tracks which modes this cycle has already drawn so nextMode() avoids
+  // Tracks which chords this cycle has already drawn so nextChord() avoids
   // repeating one until the rest of the pool has come up.
-  const usedModesRef = useRef<Set<string>>(initialPick.used);
-  const [mode, setMode] = useState<Mode>(initialPick.mode);
+  const usedChordsRef = useRef<Set<string>>(initialPick.used);
+  const [chord, setChord] = useState<AlteredChord>(initialPick.chord);
   const [selected, setSelected] = useState<ReadonlySet<number>>(() => new Set<number>());
   const [grade, setGrade] = useState<Grade | null>(null);
   const [stats, setStats] = useState<Stats>(EMPTY_STATS);
 
   // Kept in sync via effect (rather than written during render) so the
-  // keyboard handler never closes over a stale mode.
-  const modeRef = useRef(mode);
+  // keyboard handler never closes over a stale chord.
+  const chordRef = useRef(chord);
   useEffect(() => {
-    modeRef.current = mode;
+    chordRef.current = chord;
   });
 
-  const nextMode = useCallback(() => {
-    const picked = randomMode(qualityIds, usedModesRef.current);
-    usedModesRef.current = picked.used;
-    setMode(picked.mode);
+  const nextChord = useCallback(() => {
+    const picked = randomAlteredChord(qualityIds, usedChordsRef.current);
+    usedChordsRef.current = picked.used;
+    setChord(picked.chord);
     setSelected(new Set<number>());
     setGrade(null);
   }, [qualityIds]);
 
   // Re-draw when the settings actually change and would make the current
-  // mode unreachable — a forced mode is exempt on mount so it isn't
+  // chord unreachable — a forced chord is exempt on mount so it isn't
   // immediately swapped out by whatever quality settings happen to be
   // stored from a previous session. Keyed off the qualityIds reference
   // itself (rather than a "have I run yet" flag) so this stays a no-op
   // across React StrictMode's dev-only double-invocation of mount effects —
   // a flag consumed on the first call would wrongly fire the reconcile on
-  // the second, discarding a still-valid forced mode.
+  // the second, discarding a still-valid forced chord.
   const reconciledQualityIdsRef = useRef(qualityIds);
   useEffect(() => {
     if (reconciledQualityIdsRef.current === qualityIds) return;
     reconciledQualityIdsRef.current = qualityIds;
-    if (!qualityIds.includes(modeRef.current.quality.id)) nextMode();
-  }, [nextMode, qualityIds]);
+    if (!qualityIds.includes(chordRef.current.quality.id)) nextChord();
+  }, [nextChord, qualityIds]);
 
   const toggleKey = useCallback((midi: number) => {
     setSelected((previous) => {
@@ -99,10 +114,10 @@ export function ModesExercise({ params }: ExerciseComponentProps) {
 
   const submit = useCallback(() => {
     if (grade || selected.size === 0) return;
-    const result = gradeAnswer(mode, [...selected], { requireRootInBass: false });
+    const result = gradeAnswer(chord, [...selected], { requireRootInBass });
     setGrade(result);
     if (result.correct) {
-      playReplay(scaleReplayGroups(mode.tones, LOW_MIDI), autoSubmit ? AUTO_SUBMIT_REPLAY_DELAY_SECONDS : 0);
+      playReplay(chordReplayGroups(chord.tones, LOW_MIDI), autoSubmit ? AUTO_SUBMIT_REPLAY_DELAY_SECONDS : 0);
     }
     setStats((previous) => {
       const streak = result.correct ? previous.streak + 1 : 0;
@@ -113,7 +128,7 @@ export function ModesExercise({ params }: ExerciseComponentProps) {
         bestStreak: Math.max(previous.bestStreak, streak),
       };
     });
-  }, [autoSubmit, grade, mode, playReplay, selected]);
+  }, [autoSubmit, chord, grade, playReplay, requireRootInBass, selected]);
 
   const clear = useCallback(() => {
     if (grade) return;
@@ -125,19 +140,22 @@ export function ModesExercise({ params }: ExerciseComponentProps) {
     setGrade(null);
   }, []);
 
-  // Auto-submit once the selection has as many notes as the mode needs.
-  // Deliberately an effect rather than a call inside toggleKey — see the
-  // same pattern in SeventhChordExercise.tsx.
+  // Auto-submit once the selection has as many notes as the chord needs.
+  // Deliberately an effect rather than a call inside toggleKey: toggleKey is
+  // shared with Piano's computer-keyboard handler, and folding the grading
+  // logic in there would mean duplicating it and would drop toggleKey's
+  // stable [] deps, churning Piano's keydown-listener effect on every
+  // keystroke.
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (autoSubmit && !grade && selected.size >= mode.pitchClasses.length) submit();
-  }, [autoSubmit, grade, mode, selected, submit]);
+    if (autoSubmit && !grade && selected.size >= chord.pitchClasses.length) submit();
+  }, [autoSubmit, chord, grade, selected, submit]);
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
       if (event.key === "Enter") {
         event.preventDefault();
-        if (grade) nextMode();
+        if (grade) nextChord();
         else submit();
       } else if (event.key === "Escape" || event.key === "Backspace") {
         event.preventDefault();
@@ -146,7 +164,7 @@ export function ModesExercise({ params }: ExerciseComponentProps) {
     }
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [clear, grade, nextMode, submit]);
+  }, [clear, grade, nextChord, submit]);
 
   const marks = useMemo(() => {
     const result = new Map<number, KeyMark>();
@@ -160,17 +178,25 @@ export function ModesExercise({ params }: ExerciseComponentProps) {
     return result;
   }, [grade]);
 
+  const aliases = alteredChordAliasSymbols(chord);
   const accuracy = stats.attempted === 0 ? null : Math.round((stats.correct / stats.attempted) * 100);
 
   return (
     <div className="exercise">
       <header className="prompt">
-        <p className="prompt-instruction">Play this mode</p>
-        <p className="chord-symbol">{modeSymbol(mode)}</p>
+        <p className="prompt-instruction">Play this chord</p>
+        <p className="chord-symbol">{alteredChordSymbol(chord)}</p>
+        {showAlternativeNotation && aliases.length > 0 && (
+          <p className="chord-aliases">also written {aliases.join(" · ")}</p>
+        )}
       </header>
 
       <div className={`verdict verdict-${grade ? (grade.correct ? "correct" : "incorrect") : "pending"}`}>
-        {grade ? <Feedback mode={mode} grade={grade} /> : <p>{describeSelection(selected.size)}</p>}
+        {grade ? (
+          <Feedback chord={chord} grade={grade} />
+        ) : (
+          <p>{describeSelection(selected.size, requireRootInBass)}</p>
+        )}
       </div>
 
       <Piano
@@ -192,8 +218,8 @@ export function ModesExercise({ params }: ExerciseComponentProps) {
                 Retry
               </button>
             )}
-            <button type="button" className="button button-primary" onClick={nextMode} autoFocus>
-              Next mode <kbd>↵</kbd>
+            <button type="button" className="button button-primary" onClick={nextChord} autoFocus>
+              Next chord <kbd>↵</kbd>
             </button>
           </>
         ) : (
@@ -229,10 +255,14 @@ export function ModesExercise({ params }: ExerciseComponentProps) {
       <Settings
         qualityIds={qualityIds}
         onQualityIdsChange={setQualityIds}
+        requireRootInBass={requireRootInBass}
+        onRequireRootInBassChange={setRequireRootInBass}
         showNoteNames={showNoteNames}
         onShowNoteNamesChange={setShowNoteNames}
         autoSubmit={autoSubmit}
         onAutoSubmitChange={setAutoSubmit}
+        showAlternativeNotation={showAlternativeNotation}
+        onShowAlternativeNotationChange={setShowAlternativeNotation}
         playSound={playSound}
         onPlaySoundChange={setPlaySound}
         replayOnSuccess={replayOnSuccess}
@@ -241,23 +271,34 @@ export function ModesExercise({ params }: ExerciseComponentProps) {
       />
 
       <Tutorial>
-        <ModesTutorial />
+        <AlteredChordsTutorial />
       </Tutorial>
     </div>
   );
 }
 
-function describeSelection(count: number): string {
-  if (count === 0) return "Click the keys to build the mode, in any order or octave.";
+function describeSelection(count: number, requireRootInBass: boolean): string {
+  if (count === 0) {
+    return requireRootInBass
+      ? "Click the keys to build the chord — root in the bass."
+      : "Click the keys to build the chord. Any octave or inversion counts.";
+  }
   return `${count} ${count === 1 ? "key" : "keys"} held.`;
 }
 
-function Feedback({ mode, grade }: { mode: Mode; grade: Grade }) {
-  const tones = modeToneNames(mode).join(" · ");
+function Feedback({ chord, grade }: { chord: AlteredChord; grade: Grade }) {
+  const tones = alteredChordToneNames(chord).join(" · ");
   if (grade.correct) {
     return (
       <p>
-        <strong>Correct.</strong> {modeSymbol(mode)} is {tones}.
+        <strong>Correct.</strong> {alteredChordSymbol(chord)} is {tones}.
+      </p>
+    );
+  }
+  if (grade.voicingIssue) {
+    return (
+      <p>
+        <strong>Almost.</strong> {grade.voicingIssue}
       </p>
     );
   }
@@ -274,7 +315,8 @@ function Feedback({ mode, grade }: { mode: Mode; grade: Grade }) {
   return (
     <p>
       <strong>Not quite</strong>
-      {problems.length > 0 && ` — ${problems.join(", ")}`}. {modeSymbol(mode)} is {tones} ({mode.quality.formula}).
+      {problems.length > 0 && ` — ${problems.join(", ")}`}. {alteredChordSymbol(chord)} is {tones} (
+      {chord.quality.formula}).
     </p>
   );
 }
@@ -282,10 +324,14 @@ function Feedback({ mode, grade }: { mode: Mode; grade: Grade }) {
 interface SettingsProps {
   qualityIds: string[];
   onQualityIdsChange: (ids: string[]) => void;
+  requireRootInBass: boolean;
+  onRequireRootInBassChange: (value: boolean) => void;
   showNoteNames: boolean;
   onShowNoteNamesChange: (value: boolean) => void;
   autoSubmit: boolean;
   onAutoSubmitChange: (value: boolean) => void;
+  showAlternativeNotation: boolean;
+  onShowAlternativeNotationChange: (value: boolean) => void;
   playSound: boolean;
   onPlaySoundChange: (value: boolean) => void;
   replayOnSuccess: boolean;
@@ -296,10 +342,14 @@ interface SettingsProps {
 function Settings({
   qualityIds,
   onQualityIdsChange,
+  requireRootInBass,
+  onRequireRootInBassChange,
   showNoteNames,
   onShowNoteNamesChange,
   autoSubmit,
   onAutoSubmitChange,
+  showAlternativeNotation,
+  onShowAlternativeNotationChange,
   playSound,
   onPlaySoundChange,
   replayOnSuccess,
@@ -317,16 +367,18 @@ function Settings({
       <summary>Settings</summary>
       <div className="settings-body">
         <fieldset>
-          <legend>Modes</legend>
+          <legend>Chord qualities</legend>
           <div className="quality-grid">
-            {MODE_QUALITIES.map((quality) => (
+            {ALTERED_CHORD_QUALITIES.map((quality) => (
               <label key={quality.id} className="checkbox">
                 <input
                   type="checkbox"
                   checked={qualityIds.includes(quality.id)}
                   onChange={() => toggleQuality(quality.id)}
                 />
-                <span>{quality.name}</span>
+                <span>
+                  {quality.name} <span className="quality-suffix">C{quality.suffix}</span>
+                </span>
               </label>
             ))}
           </div>
@@ -334,6 +386,14 @@ function Settings({
 
         <fieldset>
           <legend>Options</legend>
+          <label className="checkbox">
+            <input
+              type="checkbox"
+              checked={requireRootInBass}
+              onChange={(event) => onRequireRootInBassChange(event.target.checked)}
+            />
+            <span>Require the root in the bass (no inversions)</span>
+          </label>
           <label className="checkbox">
             <input
               type="checkbox"
@@ -351,6 +411,14 @@ function Settings({
             <span>Check automatically once enough notes are selected</span>
           </label>
           <label className="checkbox">
+            <input
+              type="checkbox"
+              checked={showAlternativeNotation}
+              onChange={(event) => onShowAlternativeNotationChange(event.target.checked)}
+            />
+            <span>Show alternative notation (e.g. maj9 for △9)</span>
+          </label>
+          <label className="checkbox">
             <input type="checkbox" checked={playSound} onChange={(event) => onPlaySoundChange(event.target.checked)} />
             <span>Play a sound when a note is pressed</span>
           </label>
@@ -360,7 +428,7 @@ function Settings({
               checked={replayOnSuccess}
               onChange={(event) => onReplayOnSuccessChange(event.target.checked)}
             />
-            <span>Play the mode back, note by note, after a correct answer</span>
+            <span>Play the chord back, note by note then as a block, after a correct answer</span>
           </label>
         </fieldset>
 

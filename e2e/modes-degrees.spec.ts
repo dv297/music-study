@@ -70,6 +70,18 @@ test("there is no auto-submit setting", async ({ page }) => {
   await expect(page.getByText("Check automatically once enough notes are selected")).toHaveCount(0);
 });
 
+test("a forced mode outside a customized quality setting still pins correctly", async ({ page }) => {
+  // Simulates a returning visitor who has disabled every quality but
+  // dorian — exactly the case where the settings-reconcile effect could
+  // mistake a valid pinned prompt for a stale one and redraw it.
+  await page.addInitScript(() => {
+    localStorage.setItem("music-study:modes-degrees:qualityIds", JSON.stringify(["dorian"]));
+  });
+  await page.goto("/#/exercise/modes-degrees?mode=lydian");
+
+  await expect(page.locator(".chord-symbol")).toHaveText("Lydian");
+});
+
 test("an unrecognized mode param falls back to a normal prompt instead of breaking", async ({ page }) => {
   await page.goto("/#/exercise/modes-degrees?mode=not-a-real-mode");
 
