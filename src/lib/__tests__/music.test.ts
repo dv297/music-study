@@ -29,6 +29,7 @@ import {
   gradeModeDegrees,
   MODE_QUALITIES,
   modeDegreeAlterations,
+  modeDegreeMidiNotes,
   modeId,
   modeSymbol,
   parseModeId,
@@ -709,6 +710,27 @@ describe("findModeQuality", () => {
 
   it("returns undefined for an unrecognized id", () => {
     expect(findModeQuality("not-a-mode")).toBeUndefined();
+  });
+});
+
+describe("modeDegreeMidiNotes", () => {
+  const modeQuality = (id: string) => {
+    const q = findModeQuality(id);
+    if (!q) throw new Error(`missing mode quality ${id}`);
+    return q;
+  };
+
+  it("places Dorian's seven degrees relative to middle C by default", () => {
+    expect(modeDegreeMidiNotes(modeQuality("dorian"))).toEqual([60, 62, 63, 65, 67, 69, 70]);
+  });
+
+  it("shifts every degree by the same amount when given a different reference root", () => {
+    expect(modeDegreeMidiNotes(modeQuality("dorian"), 67)).toEqual([67, 69, 70, 72, 74, 76, 77]);
+  });
+
+  it("agrees with modeDegreeAlterations' flats for Locrian", () => {
+    // 1 b2 b3 4 b5 b6 b7 from C -> C Db Eb F Gb Ab Bb
+    expect(modeDegreeMidiNotes(modeQuality("locrian"))).toEqual([60, 61, 63, 65, 66, 68, 70]);
   });
 });
 

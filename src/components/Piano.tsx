@@ -15,6 +15,8 @@ interface PianoProps {
   disabled?: boolean;
   /** Plays a synthesized tone when a key is pressed (not released). */
   playSound?: boolean;
+  /** Overrides a key's default label (note name, or "C4" on the C keys) — e.g. to overlay a scale degree instead. */
+  keyLabels?: ReadonlyMap<number, string>;
 }
 
 /**
@@ -77,6 +79,7 @@ export function Piano({
   showNoteNames = false,
   disabled = false,
   playSound = false,
+  keyLabels,
 }: PianoProps) {
   const { keys, whiteCount } = useMemo(() => layOutKeys(lowMidi, highMidi), [lowMidi, highMidi]);
   const playNote = usePianoSound(playSound);
@@ -128,6 +131,7 @@ export function Piano({
               selected={selected.has(key.midi)}
               mark={marks?.get(key.midi)}
               showNoteNames={showNoteNames}
+              overrideLabel={keyLabels?.get(key.midi)}
               disabled={disabled}
               onToggle={handleToggle}
             />
@@ -146,6 +150,7 @@ export function Piano({
               selected={selected.has(key.midi)}
               mark={marks?.get(key.midi)}
               showNoteNames={showNoteNames}
+              overrideLabel={keyLabels?.get(key.midi)}
               disabled={disabled}
               onToggle={handleToggle}
             />
@@ -164,12 +169,23 @@ interface PianoKeyProps {
   showNoteNames: boolean;
   disabled: boolean;
   onToggle: (midi: number) => void;
+  overrideLabel?: string;
 }
 
-function PianoKey({ midi, black, style, selected, mark, showNoteNames, disabled, onToggle }: PianoKeyProps) {
+function PianoKey({
+  midi,
+  black,
+  style,
+  selected,
+  mark,
+  showNoteNames,
+  disabled,
+  onToggle,
+  overrideLabel,
+}: PianoKeyProps) {
   const name = midiToName(midi);
   const isC = pitchClassOfMidi(midi) === 0;
-  const label = showNoteNames ? name.replace(/\d$/, "") : isC ? `C${octaveOfMidi(midi)}` : "";
+  const label = overrideLabel ?? (showNoteNames ? name.replace(/\d$/, "") : isC ? `C${octaveOfMidi(midi)}` : "");
 
   const className = ["key", black ? "key-black" : "key-white", selected ? "is-selected" : "", mark ? `is-${mark}` : ""]
     .filter(Boolean)
@@ -185,7 +201,7 @@ function PianoKey({ midi, black, style, selected, mark, showNoteNames, disabled,
       disabled={disabled}
       onClick={() => onToggle(midi)}
     >
-      {label && <span className="key-label">{label}</span>}
+      {label && <span className={overrideLabel ? "key-label key-label-overlay" : "key-label"}>{label}</span>}
     </button>
   );
 }

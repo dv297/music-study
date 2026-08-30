@@ -1,7 +1,7 @@
 /** The seven diatonic modes, built the same way as a major scale rotated to start on each degree. */
 
 import { findRootByAscii, ROOTS } from "./chords";
-import { noteToAscii, noteToDisplay, pitchClassOf, spellAbove, type SpelledNote } from "./notes";
+import { MIDDLE_C, noteToAscii, noteToDisplay, pitchClassOf, spellAbove, type SpelledNote } from "./notes";
 import { pickFromBag } from "./random";
 
 /** A scale tone as (letter steps above the root, semitones above the root). */
@@ -165,6 +165,17 @@ export function modeDegreeAlterations(quality: ModeQuality): DegreeAlteration[] 
     if (diff === 1) return "sharp";
     throw new Error(`unexpected ${diff}-semitone alteration on degree ${index + 1} of ${quality.name}`);
   });
+}
+
+/**
+ * MIDI numbers for this quality's seven degrees, built on a reference root —
+ * used to draw the quality on a keyboard for visual feedback. Degree
+ * alterations don't depend on an actual root (see modeDegreeAlterations
+ * above), so the reference root is arbitrary and defaults to middle C purely
+ * for display.
+ */
+export function modeDegreeMidiNotes(quality: ModeQuality, referenceRootMidi: number = MIDDLE_C): number[] {
+  return quality.intervals.map(([, semitones]) => referenceRootMidi + semitones);
 }
 
 export interface DegreeGrade {

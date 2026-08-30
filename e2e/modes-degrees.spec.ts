@@ -5,13 +5,43 @@ import { expect, test } from "@playwright/test";
 // these assertions don't have to account for whatever mode a random draw
 // would have produced.
 
-test("no keyboard is shown — just the three degree rows", async ({ page }) => {
+test("no keyboard is shown before answering — just the three degree rows", async ({ page }) => {
   await page.goto("/#/exercise/modes-degrees?mode=dorian");
 
   await expect(page.locator(".piano")).toHaveCount(0);
   await expect(page.locator(".degree-grid")).toBeVisible();
   await expect(page.getByRole("button", { name: "Degree 1 sharp" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Degree 1 flat" })).toBeVisible();
+});
+
+test("a correct answer does not overlay a keyboard", async ({ page }) => {
+  await page.goto("/#/exercise/modes-degrees?mode=dorian");
+
+  await page.getByRole("button", { name: "Degree 3 flat" }).click();
+  await page.getByRole("button", { name: "Degree 7 flat" }).click();
+  await page.getByRole("button", { name: "Check" }).click();
+
+  await expect(page.locator(".verdict")).toContainText("Correct.");
+  await expect(page.locator(".piano")).toHaveCount(0);
+});
+
+test("a wrong answer overlays the mode's scale degrees on a keyboard, cleared on retry", async ({ page }) => {
+  await page.goto("/#/exercise/modes-degrees?mode=dorian");
+
+  // Leave everything natural — Dorian needs the 3rd and 7th flatted.
+  await page.getByRole("button", { name: "Check" }).click();
+
+  const piano = page.locator(".piano");
+  await expect(piano).toBeVisible();
+  // Dorian's five untouched degrees (1 2 4 5 6) come back correct; the 3rd
+  // and 7th — the ones the all-natural answer got wrong — are marked missing.
+  await expect(piano.locator(".key.is-correct")).toHaveCount(5);
+  await expect(piano.locator(".key.is-missing")).toHaveCount(2);
+  await expect(piano.getByText("♭3", { exact: true })).toBeVisible();
+  await expect(piano.getByText("♭7", { exact: true })).toBeVisible();
+
+  await page.getByRole("button", { name: "Retry" }).click();
+  await expect(page.locator(".piano")).toHaveCount(0);
 });
 
 test("submitting the correct formula for Dorian", async ({ page }) => {
