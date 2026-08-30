@@ -372,6 +372,11 @@ a.exercise-card:hover {
   pointer-events: none;
 }
 
+.key-label-overlay {
+  font-size: 1rem;
+  font-weight: 700;
+}
+
 .key-white.is-selected {
   background: var(--accent);
   color: #08111f;
@@ -690,4 +695,17 @@ kbd {
 
 .degree-label.is-incorrect {
   color: var(--incorrect);
+}
+
+.degree-keyboard {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.degree-keyboard-caption {
+  margin: 0;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.85rem;
 }

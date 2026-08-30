@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Piano, type KeyMark } from "../../components/Piano";
 import { Tutorial } from "../../components/Tutorial";
 import { useStoredState } from "../../hooks/useStoredState";
 import {
@@ -6,11 +7,13 @@ import {
   gradeModeDegrees,
   MODE_QUALITIES,
   modeDegreeAlterations,
+  modeDegreeMidiNotes,
   randomModeQuality,
   type DegreeAlteration,
   type DegreeGrade,
   type ModeQuality,
 } from "../../lib/modes";
+import { MIDDLE_C } from "../../lib/notes";
 import type { ExerciseComponentProps } from "../types";
 import { ModesDegreesTutorial } from "./Tutorial";
 
@@ -18,6 +21,15 @@ const DEGREES = [1, 2, 3, 4, 5, 6, 7] as const;
 const DEFAULT_QUALITY_IDS = MODE_QUALITIES.map((quality) => quality.id);
 const SETTINGS_PREFIX = "music-study:modes-degrees:";
 const NATURAL_ANSWER: DegreeAlteration[] = DEGREES.map(() => "natural");
+
+// The keyboard overlay is purely illustrative — degree alterations don't
+// depend on a root (see modeDegreeAlterations in lib/modes.ts) — so it's
+// always drawn from middle C through the octave above, and never accepts
+// input.
+const DEGREE_KEYBOARD_LOW = MIDDLE_C;
+const DEGREE_KEYBOARD_HIGH = MIDDLE_C + 12;
+const EMPTY_SELECTION = new Set<number>();
+function noop() {}
 
 interface Stats {
   attempted: number;
@@ -143,6 +155,21 @@ export function ModesDegreesExercise({ params }: ExerciseComponentProps) {
   const expected = useMemo(() => modeDegreeAlterations(quality), [quality]);
   const accuracy = stats.attempted === 0 ? null : Math.round((stats.correct / stats.attempted) * 100);
 
+  // Only built once there's a wrong answer to illustrate — a correct answer
+  // already gets its "Correct." feedback, and the keyboard would just repeat
+  // what the (still-visible, now-disabled) degree grid already shows.
+  const degreeKeyboard = useMemo(() => {
+    if (!grade || grade.correct) return null;
+    const marks = new Map<number, KeyMark>();
+    const keyLabels = new Map<number, string>();
+    modeDegreeMidiNotes(quality).forEach((midi, index) => {
+      const degree = index + 1;
+      marks.set(midi, grade.correctDegrees.includes(degree) ? "correct" : "missing");
+      keyLabels.set(midi, degreeKeyLabel(degree, expected[index]));
+    });
+    return { marks, keyLabels };
+  }, [expected, grade, quality]);
+
   return (
     <div className="exercise">
       <header className="prompt">
@@ -157,6 +184,23 @@ export function ModesDegreesExercise({ params }: ExerciseComponentProps) {
           <p>Toggle ♯ or ♭ on any degree that needs it — leave the rest natural.</p>
         )}
       </div>
+
+      {degreeKeyboard && (
+        <div className="degree-keyboard">
+          <p className="degree-keyboard-caption">
+            {quality.name} from C — green is what you got right, gold is what to fix. Same shape in any key.
+          </p>
+          <Piano
+            lowMidi={DEGREE_KEYBOARD_LOW}
+            highMidi={DEGREE_KEYBOARD_HIGH}
+            selected={EMPTY_SELECTION}
+            onToggle={noop}
+            marks={degreeKeyboard.marks}
+            keyLabels={degreeKeyboard.keyLabels}
+            disabled
+          />
+        </div>
+      )}
 
       <div className="degree-grid" role="group" aria-label="Scale degree alterations">
         {DEGREES.map((degree, index) => (
@@ -268,6 +312,13 @@ function degreeLabelClassName(index: number, grade: DegreeGrade | null): string 
   if (!grade) return "degree-label";
   const correct = grade.correctDegrees.includes(index + 1);
   return `degree-label ${correct ? "is-correct" : "is-incorrect"}`;
+}
+
+/** "♭3", "♯4", "5" — a scale-degree key-overlay label, root-independent. */
+function degreeKeyLabel(degree: number, alteration: DegreeAlteration): string {
+  if (alteration === "sharp") return `♯${degree}`;
+  if (alteration === "flat") return `♭${degree}`;
+  return `${degree}`;
 }
 
 function Feedback({ quality, grade }: { quality: ModeQuality; grade: DegreeGrade }) {
