@@ -1,5 +1,15 @@
 import { describe, expect, it } from "vitest";
 import {
+  ALTERED_CHORD_QUALITIES,
+  alteredChordAliasSymbols,
+  alteredChordId,
+  alteredChordSymbol,
+  buildAlteredChord,
+  parseAlteredChordId,
+  QUALITY_BY_ID as ALTERED_QUALITY_BY_ID,
+  randomAlteredChord,
+} from "../alteredChords";
+import {
   buildChord,
   chordAliasSymbols,
   chordSymbol,
@@ -242,6 +252,151 @@ describe("parseChordId", () => {
     expect(parseChordId("")).toBeUndefined();
     expect(parseChordId(":maj7")).toBeUndefined();
     expect(parseChordId("C:")).toBeUndefined();
+  });
+});
+
+describe("altered chords", () => {
+  const alteredQuality = (id: string) => {
+    const q = ALTERED_QUALITY_BY_ID.get(id);
+    if (!q) throw new Error(`missing altered chord quality ${id}`);
+    return q;
+  };
+
+  it("spells a dominant 9th chord", () => {
+    const chord = buildAlteredChord(parseNote("C"), alteredQuality("dom9"));
+    expect(chord.tones.map(noteToAscii)).toEqual(["C", "E", "G", "Bb", "D"]);
+    expect(chord.pitchClasses).toEqual([0, 4, 7, 10, 2]);
+  });
+
+  it("spells the altered ninths with the correct accidental", () => {
+    expect(buildAlteredChord(parseNote("C"), alteredQuality("dom7b9")).tones.map(noteToAscii)).toEqual([
+      "C",
+      "E",
+      "G",
+      "Bb",
+      "Db",
+    ]);
+    expect(buildAlteredChord(parseNote("C"), alteredQuality("dom7sharp9")).tones.map(noteToAscii)).toEqual([
+      "C",
+      "E",
+      "G",
+      "Bb",
+      "D#",
+    ]);
+  });
+
+  it("spells a sharp 11 above the 7th", () => {
+    expect(buildAlteredChord(parseNote("C"), alteredQuality("dom7sharp11")).tones.map(noteToAscii)).toEqual([
+      "C",
+      "E",
+      "G",
+      "Bb",
+      "F#",
+    ]);
+  });
+
+  it("spells dominant and major 13th chords with the 9th but not the 11th", () => {
+    expect(buildAlteredChord(parseNote("C"), alteredQuality("dom13")).tones.map(noteToAscii)).toEqual([
+      "C",
+      "E",
+      "G",
+      "Bb",
+      "D",
+      "A",
+    ]);
+    expect(buildAlteredChord(parseNote("C"), alteredQuality("maj13")).tones.map(noteToAscii)).toEqual([
+      "C",
+      "E",
+      "G",
+      "B",
+      "D",
+      "A",
+    ]);
+  });
+
+  it("spells minor 9th and 11th chords", () => {
+    expect(buildAlteredChord(parseNote("C"), alteredQuality("min9")).tones.map(noteToAscii)).toEqual([
+      "C",
+      "Eb",
+      "G",
+      "Bb",
+      "D",
+    ]);
+    expect(buildAlteredChord(parseNote("C"), alteredQuality("min11")).tones.map(noteToAscii)).toEqual([
+      "C",
+      "Eb",
+      "G",
+      "Bb",
+      "F",
+    ]);
+  });
+
+  it("renders the root with a display accidental", () => {
+    expect(alteredChordSymbol(buildAlteredChord(parseNote("Bb"), alteredQuality("dom7b9")))).toBe("B♭7♭9");
+    expect(alteredChordSymbol(buildAlteredChord(parseNote("D"), alteredQuality("maj9")))).toBe("D△9");
+  });
+
+  it("lists the plain-letter spelling as an alias of the shape notation", () => {
+    expect(alteredChordAliasSymbols(buildAlteredChord(parseNote("D"), alteredQuality("maj9")))).toEqual([
+      "Dmaj9",
+      "DM9",
+    ]);
+  });
+
+  it("grades a 13th chord, reporting the 9th and 13th as missing when left out", () => {
+    const c13 = buildAlteredChord(parseNote("C"), alteredQuality("dom13"));
+    const options = { requireRootInBass: false };
+    expect(gradeAnswer(c13, [60, 64, 67, 70, 62, 69], options).correct).toBe(true);
+    const grade = gradeAnswer(c13, [60, 64, 67, 70], options);
+    expect(grade.correct).toBe(false);
+    expect(grade.missingPitchClasses).toEqual([2, 9]);
+  });
+
+  it("round-trips every root and quality through alteredChordId()", () => {
+    for (const root of ROOTS) {
+      for (const q of ALTERED_CHORD_QUALITIES) {
+        const chord = buildAlteredChord(root, q);
+        expect(parseAlteredChordId(alteredChordId(chord))).toEqual(chord);
+      }
+    }
+  });
+
+  it("returns undefined for an unrecognized root, quality, or malformed id", () => {
+    expect(parseAlteredChordId("H:dom9")).toBeUndefined();
+    expect(parseAlteredChordId("C:not-a-quality")).toBeUndefined();
+    expect(parseAlteredChordId("Cdom9")).toBeUndefined();
+    expect(parseAlteredChordId("")).toBeUndefined();
+  });
+
+  it("draws every chord in the pool once before any repeat, starting fresh", () => {
+    let used = new Set<string>();
+    const ids = new Set<string>();
+    for (let i = 0; i < ROOTS.length; i++) {
+      const { chord, used: nextUsed } = randomAlteredChord(["dom9"], used);
+      ids.add(alteredChordId(chord));
+      used = nextUsed;
+    }
+    expect(ids.size).toBe(ROOTS.length);
+  });
+
+  it("never repeats the immediately previous chord, even across a cycle boundary", () => {
+    let used = new Set<string>();
+    const ids: string[] = [];
+    for (let i = 0; i < ROOTS.length * 5; i++) {
+      const { chord, used: nextUsed } = randomAlteredChord(["dom9"], used);
+      ids.push(alteredChordId(chord));
+      used = nextUsed;
+    }
+    expectNoImmediateRepeats(ids);
+  });
+
+  it("only draws from the enabled qualities", () => {
+    let used = new Set<string>();
+    for (let i = 0; i < 50; i++) {
+      const picked = randomAlteredChord(["min9", "min11"], used);
+      expect(picked.chord.quality.id).toMatch(/^(min9|min11)$/);
+      used = picked.used;
+    }
   });
 });
 
